@@ -446,9 +446,9 @@ describe('Google Drive Service', () => {
       );
 
       // Assert
-      expect(report).toContain('Daily Call Report');
-      expect(report).toContain('Called Numbers: 5');
-      expect(report).toContain('File Deletion Report');
+      expect(report).toContain('Daily Call Report:');
+      expect(report).toContain('Called Numbers : 5');
+      expect(report).toContain('File Deletion Report :');
       expect(report).toContain('2023-01-01 : 3');
       expect(report).toContain('2023-01-02 : 2');
     });

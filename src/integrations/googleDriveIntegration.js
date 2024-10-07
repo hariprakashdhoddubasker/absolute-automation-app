@@ -74,7 +74,7 @@ const googleDriveIntegration = {
     if (!res.data.files || res.data.files.length === 0) {
       logger.info(`No files found in folder with ID: ${folderId}`);
     } else {
-      logger.info(`Files found: ${JSON.stringify(res.data.files)}`);
+      logger.info(`Files found: [${JSON.stringify(res.data.files.length)}]`);
     }
     
     return res.data.files || [];

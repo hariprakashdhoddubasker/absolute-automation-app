@@ -165,7 +165,10 @@ const googleDriveService = {
         deletionReport += `${date} : ${count}\n`;
       }
 
-      return `Daily Call Report:\nCalled Numbers: ${uniqueCallerCount}\n\nFile Deletion Report:\n${deletionReport.trim()}`;
+      //return `\nDaily Call Report:\nCalled Numbers: ${uniqueCallerCount}\n\nFile Deletion Report:\n${deletionReport.trim()}`;
+      return `\nDaily Call Report:\nCalled Numbers : ${uniqueCallerCount}${
+        deletionReport.trim() ? `\n\nFile Deletion Report : \n${deletionReport.trim()}` : ''
+      }`;
     } catch (error) {
       handleError(
         '[generateDailyCallReport] Failed to generate daily call report',
