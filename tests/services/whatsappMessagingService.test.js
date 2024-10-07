@@ -3,17 +3,19 @@
 const whatsappMessagingService = require('../../src/services/whatsappMessagingService');
 const pingerApiClient = require('../../src/integrations/pingerApiClient');
 const waTrackingService = require('../../src/services/waTrackingService');
-const { handleError } = require('../../src/utils/responseHelpers');
 
 // Mock the dependencies
 jest.mock('../../src/integrations/pingerApiClient');
 jest.mock('../../src/services/waTrackingService');
-jest.mock('../../src/utils/responseHelpers');
 
+// Start test block
 describe('WhatsApp Messaging Service', () => {
+  let handleErrorSpy;
   beforeEach(() => {
-    // Reset all mocks before each test to ensure test isolation
-    jest.resetAllMocks();
+    jest.clearAllMocks(); // Ensure all mocks are reset before each test
+    handleErrorSpy = jest
+      .spyOn(whatsappMessagingService, 'handleError')
+      .mockResolvedValue(); // Mock handleError
   });
 
   /**
@@ -103,18 +105,9 @@ describe('WhatsApp Messaging Service', () => {
     });
   });
 
-  /**
-   * Test Suite for sendGroupMessage function
-   * This suite tests sending messages to groups,
-   * ensuring that the payload is correctly constructed and errors are handled.
-   */
+  // Test Suite for sendGroupMessage
   describe('sendGroupMessage', () => {
-    /**
-     * Test Case: Successful Group Message Sending
-     * Ensures that a group message is sent successfully and the correct response is returned.
-     */
     it('should send a group message successfully', async () => {
-      // Arrange
       const params = {
         groupId: 'group123',
         message: 'Hello, Group!',
@@ -127,10 +120,8 @@ describe('WhatsApp Messaging Service', () => {
         'Group message sent successfully'
       );
 
-      // Act
       const result = await whatsappMessagingService.sendGroupMessage(params);
 
-      // Assert
       expect(pingerApiClient.sendMessageToGroup).toHaveBeenCalledWith({
         groupId: 'group123',
         type: 'text',
@@ -141,53 +132,35 @@ describe('WhatsApp Messaging Service', () => {
       expect(result).toBe('Group message sent successfully');
     });
 
-    /**
-     * Test Case: Missing Group ID
-     * Ensures that the function logs an error and does not proceed when the group ID is missing or empty.
-     */
     it('should not proceed if groupId is null or empty', async () => {
-      // Arrange
       const params = {
         groupId: '',
         message: 'Hello, Group!',
         instanceId: 'instance123',
       };
 
-      // Mock handleError
-      handleError.mockResolvedValue();
-
-      // Act
       const result = await whatsappMessagingService.sendGroupMessage(params);
 
-      // Assert
-      expect(handleError).toHaveBeenCalledWith('Group ID is null or empty');
+      await expect(handleErrorSpy).toHaveBeenCalledWith(
+        'Group ID is null or empty'
+      );
       expect(pingerApiClient.sendMessageToGroup).not.toHaveBeenCalled();
-      expect(result).toBeUndefined();
+      expect(result).toBeNull();
     });
 
-    /**
-     * Test Case: Missing Required Fields
-     * Ensures that an error is thrown when required fields are missing.
-     */
-    it('should throw an error if required fields are missing', async () => {
-      // Arrange
+    it('should return null and log error if required fields are missing', async () => {
       const params = {
         message: 'Hello, Group!',
         instanceId: 'instance123',
       };
 
-      // Act & Assert
-      await expect(
-        whatsappMessagingService.sendGroupMessage(params)
-      ).rejects.toThrow('Missing required fields');
+      const result = await whatsappMessagingService.sendGroupMessage(params);
+
+      expect(handleErrorSpy).toHaveBeenCalledWith('Group ID is null or empty');
+      expect(result).toBeNull();
     });
 
-    /**
-     * Test Case: API Client Failure
-     * Ensures that an error is thrown when the API client fails.
-     */
-    it('should throw an error if pingerApiClient fails', async () => {
-      // Arrange
+    it('should return null and log error if pingerApiClient fails', async () => {
       const params = {
         groupId: 'group123',
         message: 'Hello, Group!',
@@ -195,93 +168,69 @@ describe('WhatsApp Messaging Service', () => {
       };
 
       process.env.PINGER_ACCESS_TOKEN = 'access123';
-
       pingerApiClient.sendMessageToGroup.mockRejectedValue(
         new Error('API Error')
       );
 
-      // Act & Assert
-      await expect(
-        whatsappMessagingService.sendGroupMessage(params)
-      ).rejects.toThrow('Failed to send text message: API Error');
+      const result = await whatsappMessagingService.sendGroupMessage(params);
+
+      expect(handleErrorSpy).toHaveBeenCalledWith(
+        'Failed to send text message',
+        expect.any(Error)
+      );
+      expect(result).toBeNull();
     });
   });
 
-  /**
-   * Test Suite for getDefaultInstanceId function
-   * This suite tests the retrieval of the default WhatsApp instance ID.
-   */
+  // Test Suite for getDefaultInstanceId
   describe('getDefaultInstanceId', () => {
-    /**
-     * Test Case: Successful Retrieval of Instance ID
-     * Ensures that the instance ID is returned when available.
-     */
     it('should return the default instance ID', async () => {
-      // Arrange
       process.env.DEFAULT_WHATSAPP_NUMBER = '1234567890';
 
-      const instanceDetails = {
-        instance_id: 'instance123',
-      };
+      const instanceDetails = { instance_id: 'instance123' };
 
       waTrackingService.getInstanceDetailsByPhoneNumber.mockResolvedValue(
         instanceDetails
       );
 
-      // Act
       const result = await whatsappMessagingService.getDefaultInstanceId();
 
-      // Assert
       expect(
         waTrackingService.getInstanceDetailsByPhoneNumber
       ).toHaveBeenCalledWith('1234567890');
       expect(result).toBe('instance123');
     });
 
-    /**
-     * Test Case: Instance Details Missing
-     * Ensures that null is returned and an error is logged when instance details are missing.
-     */
     it('should return null and log error if instanceDetails is missing', async () => {
-      // Arrange
       process.env.DEFAULT_WHATSAPP_NUMBER = '1234567890';
 
       waTrackingService.getInstanceDetailsByPhoneNumber.mockResolvedValue(null);
+      const handleErrorSpy = jest
+        .spyOn(whatsappMessagingService, 'handleError')
+        .mockResolvedValue();
 
-      // Mock handleError
-      handleError.mockResolvedValue();
-
-      // Act
       const result = await whatsappMessagingService.getDefaultInstanceId();
 
-      // Assert
-      expect(handleError).toHaveBeenCalledWith(
+      expect(handleErrorSpy).toHaveBeenCalledWith(
         'Failed to retrieve WhatsApp instance ID from the database.'
       );
       expect(result).toBeNull();
     });
 
-    /**
-     * Test Case: Error During Retrieval
-     * Ensures that null is returned and an error is logged when an exception occurs.
-     */
     it('should return null and log error if an exception occurs', async () => {
-      // Arrange
       process.env.DEFAULT_WHATSAPP_NUMBER = '1234567890';
-
       const testError = new Error('Database Error');
+
       waTrackingService.getInstanceDetailsByPhoneNumber.mockRejectedValue(
         testError
       );
+      const handleErrorSpy = jest
+        .spyOn(whatsappMessagingService, 'handleError')
+        .mockResolvedValue();
 
-      // Mock handleError
-      handleError.mockResolvedValue();
-
-      // Act
       const result = await whatsappMessagingService.getDefaultInstanceId();
 
-      // Assert
-      expect(handleError).toHaveBeenCalledWith(
+      expect(handleErrorSpy).toHaveBeenCalledWith(
         'Error retrieving instance ID:',
         testError
       );
@@ -289,17 +238,9 @@ describe('WhatsApp Messaging Service', () => {
     });
   });
 
-  /**
-   * Test Suite for sendMessageToManagement function
-   * This suite tests sending messages to the management number or group.
-   */
+  // Test Suite for sendMessageToManagement
   describe('sendMessageToManagement', () => {
-    /**
-     * Test Case: Send Message to Management Number
-     * Ensures that a message is sent to the management number when sendToGroup is false.
-     */
     it('should send a message to management number', async () => {
-      // Arrange
       const message = 'Important message';
       process.env.MANAGEMENT_WHATSAPP_NUMBER = '0987654321';
 
@@ -310,10 +251,8 @@ describe('WhatsApp Messaging Service', () => {
         .spyOn(whatsappMessagingService, 'sendMessage')
         .mockResolvedValue('Message sent');
 
-      // Act
       await whatsappMessagingService.sendMessageToManagement(message);
 
-      // Assert
       expect(whatsappMessagingService.getDefaultInstanceId).toHaveBeenCalled();
       expect(whatsappMessagingService.sendMessage).toHaveBeenCalledWith({
         number: '0987654321',
@@ -322,12 +261,7 @@ describe('WhatsApp Messaging Service', () => {
       });
     });
 
-    /**
-     * Test Case: Send Message to Management Group
-     * Ensures that a message is sent to the management group when sendToGroup is true.
-     */
     it('should send a message to management group when sendToGroup is true', async () => {
-      // Arrange
       const message = 'Important group message';
       process.env.MANAGEMENT_WHATSAPP_GROUP = 'group123';
 
@@ -338,10 +272,8 @@ describe('WhatsApp Messaging Service', () => {
         .spyOn(whatsappMessagingService, 'sendGroupMessage')
         .mockResolvedValue('Group message sent');
 
-      // Act
       await whatsappMessagingService.sendMessageToManagement(message, true);
 
-      // Assert
       expect(whatsappMessagingService.getDefaultInstanceId).toHaveBeenCalled();
       expect(whatsappMessagingService.sendGroupMessage).toHaveBeenCalledWith({
         groupId: 'group123',
@@ -350,22 +282,15 @@ describe('WhatsApp Messaging Service', () => {
       });
     });
 
-    /**
-     * Test Case: Instance ID Not Available
-     * Ensures that the function returns early if the instance ID is not available.
-     */
     it('should return early if instanceId is not available', async () => {
-      // Arrange
       const message = 'Important message';
 
       jest
         .spyOn(whatsappMessagingService, 'getDefaultInstanceId')
         .mockResolvedValue(null);
 
-      // Act
       await whatsappMessagingService.sendMessageToManagement(message);
 
-      // Assert
       expect(whatsappMessagingService.getDefaultInstanceId).toHaveBeenCalled();
       expect(whatsappMessagingService.sendMessage).not.toHaveBeenCalled();
     });

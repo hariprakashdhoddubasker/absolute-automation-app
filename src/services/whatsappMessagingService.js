@@ -1,6 +1,6 @@
 // src/services/whatsappMessagingService.js
 const pingerApiClient = require('../integrations/pingerApiClient');
-const { handleError } = require('../utils/responseHelpers'); 
+const logger = require('../utils/logger');
 // Function to lazily load WhatsApp TrackingService
 const getWhatsAppTrackingService = () => {
   return require('../services/waTrackingService');
@@ -35,7 +35,9 @@ const whatsappMessagingService = {
     filename,
   }) => {
     if (!number || !message || !instanceId) {
-      throw new Error(`Missing required fields - number : ${number}, number : ${message}, number : ${instanceId}`);
+      throw new Error(
+        `Missing required fields - number : ${number}, number : ${message}, number : ${instanceId}`
+      );
     }
 
     try {
@@ -63,19 +65,16 @@ const whatsappMessagingService = {
   },
   sendGroupMessage: async ({ groupId, type = 'text', message, instanceId }) => {
     if (!message || !instanceId) {
-      throw new Error('Missing required fields');
-    }
-
-    // Check if groupId is null or undefined
-    if (groupId == null) {
-      throw new Error('Missing required fields');
+      await whatsappMessagingService.handleError('Missing required fields');
+      return null; 
     }
 
     // Check if groupId is null, undefined, or empty
-    if (!groupId || groupId.trim() === '') {
-      await handleError('Group ID is null or empty');
-      return; // Exit the function early
+    if (!groupId?.trim()) {
+      await whatsappMessagingService.handleError('Group ID is null or empty');
+      return null; 
     }
+
     try {
       const accessToken = process.env.PINGER_ACCESS_TOKEN;
 
@@ -87,7 +86,8 @@ const whatsappMessagingService = {
         accessToken,
       });
     } catch (error) {
-      throw new Error(`Failed to send ${type} message: ${error.message}`);
+      await whatsappMessagingService.handleError(`Failed to send ${type} message`, error);
+      return null; 
     }
   },
 
@@ -100,7 +100,7 @@ const whatsappMessagingService = {
         await trackingService.getInstanceDetailsByPhoneNumber(whatsappNumber);
 
       if (!instanceDetails || !instanceDetails.instance_id) {
-        await handleError(
+        await whatsappMessagingService.handleError(
           'Failed to retrieve WhatsApp instance ID from the database.'
         );
         return null;
@@ -108,8 +108,28 @@ const whatsappMessagingService = {
 
       return instanceDetails.instance_id;
     } catch (error) {
-      await handleError('Error retrieving instance ID:', error);
+      await whatsappMessagingService.handleError('Error retrieving instance ID:', error);
       return null;
+    }
+  },
+
+  handleError: async (
+    message = 'An error occurred',
+    error = null,
+    sendToWhatsApp = true,
+    shouldThrow = false
+  ) => {
+    const env = process.env.NODE_ENV || 'development';
+
+    // Log detailed error information
+    logger.error(`Error: ${message}`, {
+      errorMessage: error ? error.message : 'No error message provided',
+      stack: error ? error.stack : 'No stack trace available',
+    });
+
+    // Throw the error in development and test environments for easier debugging
+    if (shouldThrow && (env === 'development' || env === 'test')) {
+      throw error || new Error(message);
     }
   },
 };
