@@ -6,11 +6,14 @@
  * @returns {string} The MySQL DATETIME formatted string.
  */
 const convertUnixToMySQLDateTime = (unixTimestamp) => {
-    const date = new Date(unixTimestamp);
-    return date.toISOString().slice(0, 19).replace('T', ' ');
-  };
-  
-  module.exports = {
-    convertUnixToMySQLDateTime,
-  };
-  
+  const date = new Date(unixTimestamp);
+  return date.toISOString().slice(0, 19).replace('T', ' ');
+};
+
+// Helper function to sleep for a random duration between x and y seconds
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+module.exports = {
+  convertUnixToMySQLDateTime,
+  sleep
+};

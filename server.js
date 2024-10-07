@@ -9,7 +9,7 @@ let server = http.createServer(app);
 const port = process.env.PORT || 3000;
 
 server = app.listen(port, () => {
-  logger.info(`Server running on port ${port}`);
+  logger.info(`Server running on port ${port} in ${process.env.NODE_ENV} Env`);
 });
 
 module.exports = server;
