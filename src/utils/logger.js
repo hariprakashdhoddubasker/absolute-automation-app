@@ -41,7 +41,7 @@ const transports = [
 
 // Create Winston logger instance
 const logger = winston.createLogger({
-  level: process.env.NODE_ENV === 'production' ? 'warn' : 'debug', // Set log level based on environment
+  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug', // Set log level based on environment
   transports,
 });
 
