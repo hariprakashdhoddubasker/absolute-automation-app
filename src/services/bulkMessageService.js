@@ -8,7 +8,7 @@ const { sleep } = require('../utils/dateTimeUtils');
 
 const bulkMessageService = {
   // Asynchronous function to process bulk messages
-  processBulkMessages: async () => {
+  processBulkMessages: async (priority = 'all') => {
     try {
       // Step 1: Get available WhatsApp numbers and determine message capacity
       const availableNumbers = await waTrackingService.getAvailableNumbers();
@@ -25,42 +25,54 @@ const bulkMessageService = {
         0
       );
 
-      // Step 2: Query the message queue table to retrieve entries within the limit
-      const messagesToProcess = await whatsappQueueService.getPendingMessages(
-        totalAvailableMessages
-      );
+      // Step 2: Query the message queue table to retrieve high-priority entries within the limit
+      let messagesToProcess =
+        await whatsappQueueService.getHighPriorityQueuedMessages();
+
+      // If priority is 'all' and there is remaining capacity, fetch normal-priority messages
+      if (
+        priority === 'all' &&
+        messagesToProcess.length < totalAvailableMessages
+      ) {
+        const remainingCapacity =
+          totalAvailableMessages - messagesToProcess.length;
+        const normalPriorityMessages =
+          await whatsappQueueService.getPendingQueuedMessagesWithLimit(
+            'normal',
+            remainingCapacity
+          );
+        messagesToProcess = messagesToProcess.concat(normalPriorityMessages);
+      }
 
       if (messagesToProcess.length === 0) {
         await handleError('No messages found to process.');
+        return null;
       }
 
       // Step 3: Distribute and send the messages in bulk
-      let result = await processMessageQueue(
+      let result = await bulkMessageService.processMessageQueue(
         messagesToProcess,
         availableNumbers
       );
 
       // Send the summary as a WhatsApp text using the first available WhatsApp number only in the production env
-      if (
-        process.env.NODE_ENV === 'production' &&
-        availableNumbers.length > 0
-      ) {
-        const firstAvailableNumber = availableNumbers[0]; // Use the first number from available numbers
+      if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') {
+        const instanceId =
+          await whatsappMessagingService.getDefaultInstanceId();
         await whatsappMessagingService.sendMessage({
-          number: '8089947074', // Send to tmy WhatsApp Number
+          number: '8089947074', // Send to my personal WhatsApp Number
           type: 'text',
           message: result,
-          instanceId: firstAvailableNumber.instance_id,
+          instanceId,
         });
       }
     } catch (error) {
       await handleError('Error in bulk message processing:', error);
     }
   },
-};
 
-// Function to process the message queue
-const processMessageQueue = async (messages, availableNumbers) => {
+  // Function to process the message queue
+processMessageQueue: async (messages, availableNumbers) => {
   let currentNumberIndex = 0;
   const messageCounts = {}; // Object to track the number of messages sent per number
 
@@ -81,7 +93,7 @@ const processMessageQueue = async (messages, availableNumbers) => {
     const delay = Math.floor(
       Math.random() * (maxDelay - minDelay + 1) + minDelay
     );
-    if(process.env.NODE_ENV !== 'test'){
+    if (process.env.NODE_ENV !== 'test') {
       await sleep(delay);
     }
     logger.info(
@@ -90,7 +102,10 @@ const processMessageQueue = async (messages, availableNumbers) => {
     let result;
 
     // Send the message only in the production env
-    if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') {
+    if (
+      process.env.NODE_ENV === 'production' ||
+      process.env.NODE_ENV === 'test'
+    ) {
       result = await whatsappMessagingService.sendMessage({
         name: messageEntry.name,
         number: messageEntry.phone,
@@ -100,9 +115,8 @@ const processMessageQueue = async (messages, availableNumbers) => {
         instanceId: instance_id,
         filename: messageEntry.filename,
       });
-    }
-    else if(process.env.NODE_ENV === 'development'){
-      result = "message successfully sent to number";
+    } else if (process.env.NODE_ENV === 'development') {
+      result = 'message successfully sent to number';
     }
     // Only proceed if the message was successfully sent
     if (result && result.includes('message successfully sent to number')) {
@@ -145,6 +159,8 @@ const processMessageQueue = async (messages, availableNumbers) => {
   // You can now send this messageSummary as a WhatsApp message
   logger.info(messageSummary);
   return messageSummary;
+}
 };
+
 
 module.exports = bulkMessageService;

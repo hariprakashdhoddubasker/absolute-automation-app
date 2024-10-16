@@ -25,10 +25,15 @@ jest.mock('../../src/services/bulkMessageService', () => ({
   processBulkMessages: jest.fn(),
 }));
 
+jest.mock('../../src/services/nurtureScheduleService', () => ({
+  sendScheduledNurtureMessages: jest.fn(),
+}));
+
 // Import the mocked services
 const whatsappQueueService = require('../../src/services/whatsappQueueService');
 const whatsappMessagingService = require('../../src/services/whatsappMessagingService');
 const bulkMessageService = require('../../src/services/bulkMessageService');
+const nurtureScheduleService = require('../../src/services/nurtureScheduleService');
 
 describe('WhatsApp Controller', () => {
   let req;
@@ -208,7 +213,8 @@ describe('WhatsApp Controller', () => {
       );
       expect(
         whatsappMessagingService.getDefaultInstanceId
-      ).toHaveBeenCalledWith(res);
+      ).toHaveBeenCalled(); // No arguments
+
       expect(whatsappMessagingService.sendMessage).toHaveBeenCalledWith({
         number: '1234567890',
         type: 'text',
@@ -301,8 +307,7 @@ describe('WhatsApp Controller', () => {
      */
     it('should initiate bulk message processing and return success response', async () => {
       // Arrange
-      // No specific setup needed as no parameters are required
-
+      req.body = {}; // Ensure req.body is defined
       // Act
       await whatsappController.sendQueuedWhatsAppMessages(req, res);
 
@@ -311,7 +316,25 @@ describe('WhatsApp Controller', () => {
         status: 'Processing Bulk Messages Started',
         timestamp: expect.any(String),
       });
-      expect(bulkMessageService.processBulkMessages).toHaveBeenCalledWith(res);
+      expect(bulkMessageService.processBulkMessages).toHaveBeenCalledWith('all');
+    });
+
+    /**
+     * Test Case: Initiate High-Priority Bulk Message Processing
+     * Ensures that high-priority messages are processed when 'priority' is 'high'.
+     */
+    it('should initiate high-priority bulk message processing when priority is high', async () => {
+      // Arrange
+      req.body = { priority: 'high' };
+      // Act
+      await whatsappController.sendQueuedWhatsAppMessages(req, res);
+
+      // Assert
+      expect(successResponse).toHaveBeenCalledWith(res, {
+        status: 'Processing Bulk Messages Started',
+        timestamp: expect.any(String),
+      });
+      expect(nurtureScheduleService.sendScheduledNurtureMessages).toHaveBeenCalled();
     });
 
     /**

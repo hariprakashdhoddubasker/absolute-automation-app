@@ -5,7 +5,7 @@ const logger = require('../utils/logger');
 const getWhatsAppTrackingService = () => {
   return require('../services/waTrackingService');
 };
-
+let defaultWhatsappInstanceId = null;
 const whatsappMessagingService = {
   sendMessageToManagement: async (message, sendToGroup = false) => {
     const instanceId = await whatsappMessagingService.getDefaultInstanceId();
@@ -36,7 +36,7 @@ const whatsappMessagingService = {
   }) => {
     if (!number || !message || !instanceId) {
       throw new Error(
-        `Missing required fields - number : ${number}, number : ${message}, number : ${instanceId}`
+        `Missing required fields - number : ${number}, message : ${message}, instanceId : ${instanceId}`
       );
     }
 
@@ -66,13 +66,13 @@ const whatsappMessagingService = {
   sendGroupMessage: async ({ groupId, type = 'text', message, instanceId }) => {
     if (!message || !instanceId) {
       await whatsappMessagingService.handleError('Missing required fields');
-      return null; 
+      return null;
     }
 
     // Check if groupId is null, undefined, or empty
     if (!groupId?.trim()) {
       await whatsappMessagingService.handleError('Group ID is null or empty');
-      return null; 
+      return null;
     }
 
     try {
@@ -86,30 +86,46 @@ const whatsappMessagingService = {
         accessToken,
       });
     } catch (error) {
-      await whatsappMessagingService.handleError(`Failed to send ${type} message`, error);
-      return null; 
+      await whatsappMessagingService.handleError(
+        `Failed to send ${type} message`,
+        error
+      );
+      return null;
     }
   },
 
   // Helper function to get default instance ID
   getDefaultInstanceId: async () => {
     try {
-      const whatsappNumber = process.env.DEFAULT_WHATSAPP_NUMBER;
-      const trackingService = getWhatsAppTrackingService();
-      const instanceDetails =
-        await trackingService.getInstanceDetailsByPhoneNumber(whatsappNumber);
+      if (!defaultWhatsappInstanceId) {
+        const whatsappNumber = process.env.DEFAULT_WHATSAPP_NUMBER;
+        const trackingService = getWhatsAppTrackingService();
+        const instanceDetails =
+          await trackingService.getInstanceDetailsByPhoneNumber(whatsappNumber);
 
-      if (!instanceDetails || !instanceDetails.instance_id) {
-        await whatsappMessagingService.handleError(
-          'Failed to retrieve WhatsApp instance ID from the database.'
-        );
-        return null;
+        if (!instanceDetails || !instanceDetails.instance_id) {
+          await whatsappMessagingService.handleError(
+            'Failed to retrieve WhatsApp instance ID from the database.'
+          );
+          return null;
+        }
+
+        defaultWhatsappInstanceId = instanceDetails.instance_id;
       }
-
-      return instanceDetails.instance_id;
+      return defaultWhatsappInstanceId; // Return cached ID if already set
     } catch (error) {
-      await whatsappMessagingService.handleError('Error retrieving instance ID:', error);
+      await whatsappMessagingService.handleError(
+        'Error retrieving instance ID:',
+        error
+      );
       return null;
+    }
+  },
+
+  // Helper function to reset default instance ID (for testing purposes)
+  resetDefaultInstanceId: () => {
+    if (process.env.NODE_ENV === 'Test') {
+      defaultWhatsappInstanceId = null;
     }
   },
 

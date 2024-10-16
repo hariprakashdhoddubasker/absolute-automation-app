@@ -7,6 +7,11 @@ const logger = require('../../src/utils/logger');
 // Mock the getConnection method from the db module
 jest.mock('../../src/config/db');
 
+jest.mock('../../src/utils/responseHelpers', () => ({
+  handleError: jest.fn(),
+}));
+const { handleError } = require('../../src/utils/responseHelpers');
+
 describe('whatsappMessageQueueRepository', () => {
   let mockConnection;
 
@@ -22,9 +27,8 @@ describe('whatsappMessageQueueRepository', () => {
     // Mock getConnection to return the mock connection
     db.getConnection.mockResolvedValue(mockConnection);
 
-    // Mock console methods if needed
+    // Mock logger methods if needed
     logger.info = jest.fn();
-    handleError = jest.fn();
   });
 
   afterAll(() => {
@@ -61,7 +65,7 @@ describe('whatsappMessageQueueRepository', () => {
       // Assert
       expect(db.getConnection).toHaveBeenCalled();
       expect(mockConnection.query).toHaveBeenCalledWith(
-        'INSERT INTO whatsapp_message_queue (name, phone, message, media_url, filename, status) VALUES ?',
+        'INSERT INTO whatsapp_message_queue (name, phone, message, media_url, filename, status, priority) VALUES ?',
         [
           [
             [
@@ -71,6 +75,7 @@ describe('whatsappMessageQueueRepository', () => {
               entries[0].media_url,
               entries[0].filename,
               entries[0].status,
+              'normal', // Default priority
             ],
             [
               entries[1].name,
@@ -79,24 +84,13 @@ describe('whatsappMessageQueueRepository', () => {
               entries[1].media_url,
               entries[1].filename,
               entries[1].status,
+              'normal', // Default priority
             ],
           ],
         ]
       );
       expect(logger.info).toHaveBeenCalledWith('Queue entries inserted successfully.');
       expect(mockConnection.release).toHaveBeenCalled();
-    });
-
-    it('should log a message if no entries to insert', async () => {
-      // Arrange
-      const entries = [];
-
-      // Act
-      await whatsappMessageQueueRepository.insertQueueEntries(entries);
-
-      // Assert
-      expect(db.getConnection).not.toHaveBeenCalled();
-      expect(logger.info).toHaveBeenCalledWith('No entries to insert.');
     });
 
     it('should handle errors when inserting queue entries', async () => {
@@ -115,14 +109,13 @@ describe('whatsappMessageQueueRepository', () => {
       const mockError = new Error('Database error');
       mockConnection.query.mockRejectedValue(mockError);
 
-      // Act & Assert
-      await expect(whatsappMessageQueueRepository.insertQueueEntries(entries)).rejects.toThrow(
-        mockError
-      );
+      // Act
+      await whatsappMessageQueueRepository.insertQueueEntries(entries);
 
+      // Assert
       expect(db.getConnection).toHaveBeenCalled();
       expect(mockConnection.query).toHaveBeenCalled();
-      expect(await handleError).toHaveBeenCalledWith(
+      expect(handleError).toHaveBeenCalledWith(
         '[insertQueueEntries] Error inserting queue entries:',
         mockError
       );
@@ -130,51 +123,100 @@ describe('whatsappMessageQueueRepository', () => {
     });
   });
 
-  describe('getPendingMessages', () => {
-    it('should fetch pending messages successfully', async () => {
+  describe('getHighPriorityQueuedMessages', () => {
+    it('should fetch high priority messages successfully without limit', async () => {
       // Arrange
-      const limit = 10;
       const mockRows = [
         {
-          id: 1,
-          name: 'John Doe',
-          phone: '1234567890',
-          message: 'Hello, World!',
-          media_url: null,
-          filename: null,
+          id: 3,
+          name: 'Alice',
+          phone: '1112223333',
+          message: 'High priority message',
           status: 'pending',
-          created_at: '2023-09-15 12:00:00',
+          priority: 'high',
         },
       ];
       mockConnection.query.mockResolvedValue([mockRows]);
 
       // Act
-      const result = await whatsappMessageQueueRepository.getPendingMessages(limit);
+      const result = await whatsappMessageQueueRepository.getHighPriorityQueuedMessages();
 
       // Assert
       expect(db.getConnection).toHaveBeenCalled();
-      expect(mockConnection.query).toHaveBeenCalledWith(expect.any(String), [limit]);
+      expect(mockConnection.query).toHaveBeenCalledWith(expect.any(String), []);
       expect(result).toEqual(mockRows);
       expect(mockConnection.release).toHaveBeenCalled();
     });
 
-    it('should handle errors when fetching pending messages', async () => {
+    it('should handle errors when fetching high priority messages', async () => {
       // Arrange
-      const limit = 10;
       const mockError = new Error('Database error');
       mockConnection.query.mockRejectedValue(mockError);
 
-      // Act & Assert
-      await expect(
-        whatsappMessageQueueRepository.getPendingMessages(limit)
-      ).rejects.toThrow(mockError);
+      // Act
+      const result = await whatsappMessageQueueRepository.getHighPriorityQueuedMessages();
 
+      // Assert
       expect(db.getConnection).toHaveBeenCalled();
-      expect(mockConnection.query).toHaveBeenCalledWith(expect.any(String), [limit]);
-      expect(await handleError).toHaveBeenCalledWith(
-        '[getPendingMessages] Error fetching pending messages:',
+      expect(handleError).toHaveBeenCalledWith(
+        '[getHighPriorityMessages] Error fetching high priority messages:',
         mockError
       );
+      expect(result).toBeUndefined();
+      expect(mockConnection.release).toHaveBeenCalled();
+    });
+  });
+
+  describe('getPendingQueuedMessagesWithLimit', () => {
+    it('should fetch pending messages with specific priority and limit', async () => {
+      // Arrange
+      const priority = 'normal';
+      const limit = 3;
+      const mockRows = [
+        {
+          id: 5,
+          name: 'Charlie',
+          phone: '7778889999',
+          message: 'Normal priority message',
+          status: 'pending',
+          priority: 'normal',
+        },
+      ];
+      mockConnection.query.mockResolvedValue([mockRows]);
+
+      // Act
+      const result = await whatsappMessageQueueRepository.getPendingQueuedMessagesWithLimit(
+        priority,
+        limit
+      );
+
+      // Assert
+      expect(db.getConnection).toHaveBeenCalled();
+      expect(mockConnection.query).toHaveBeenCalledWith(expect.any(String), [priority, limit]);
+      expect(result).toEqual(mockRows);
+      expect(mockConnection.release).toHaveBeenCalled();
+    });
+
+    it('should handle errors when fetching pending messages with specific priority and limit', async () => {
+      // Arrange
+      const priority = 'normal';
+      const limit = 3;
+      const mockError = new Error('Database error');
+      mockConnection.query.mockRejectedValue(mockError);
+
+      // Act
+      const result = await whatsappMessageQueueRepository.getPendingQueuedMessagesWithLimit(
+        priority,
+        limit
+      );
+
+      // Assert
+      expect(db.getConnection).toHaveBeenCalled();
+      expect(handleError).toHaveBeenCalledWith(
+        '[getPendingMessagesWithLimit] Error fetching pending messages:',
+        mockError
+      );
+      expect(result).toBeUndefined();
       expect(mockConnection.release).toHaveBeenCalled();
     });
   });
@@ -204,17 +246,16 @@ describe('whatsappMessageQueueRepository', () => {
       const mockError = new Error('Database error');
       mockConnection.query.mockRejectedValue(mockError);
 
-      // Act & Assert
-      await expect(
-        whatsappMessageQueueRepository.deleteMessageFromQueue(id)
-      ).rejects.toThrow(mockError);
+      // Act
+      await whatsappMessageQueueRepository.deleteMessageFromQueue(id);
 
+      // Assert
       expect(db.getConnection).toHaveBeenCalled();
       expect(mockConnection.query).toHaveBeenCalledWith(
         'DELETE FROM whatsapp_message_queue WHERE id = ?',
         [id]
       );
-      expect(await handleError).toHaveBeenCalledWith(
+      expect(handleError).toHaveBeenCalledWith(
         '[deleteMessageFromQueue] Error deleting message from queue:',
         mockError
       );

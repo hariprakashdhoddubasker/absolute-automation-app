@@ -263,15 +263,15 @@ describe('WhatsApp Queue Service', () => {
   });
 
   /**
-   * Test Suite for getPendingMessages function
+   * Test Suite for getHighPriorityQueuedMessages function
    * This suite tests fetching pending messages from the queue.
    */
-  describe('getPendingMessages', () => {
+  describe('getHighPriorityQueuedMessages', () => {
     /**
      * Test Case: Retrieve pending messages within limit
      * Ensures that pending messages are retrieved up to the specified limit.
      */
-    it('should retrieve pending messages within limit', async () => {
+    it('should retrieve get High Priority Queued Messages within limit', async () => {
       // Arrange
       const limit = 10;
       const pendingMessages = [
@@ -279,18 +279,117 @@ describe('WhatsApp Queue Service', () => {
         { id: 2, message: 'Message 2' },
       ];
 
-      whatsappMessageQueueRepository.getPendingMessages.mockResolvedValue(
+      whatsappMessageQueueRepository.getHighPriorityQueuedMessages.mockResolvedValue(
         pendingMessages
       );
 
       // Act
-      const result = await whatsappQueueService.getPendingMessages(limit);
+      const result = await whatsappQueueService.getHighPriorityQueuedMessages(
+        limit
+      );
 
       // Assert
       expect(
-        whatsappMessageQueueRepository.getPendingMessages
+        whatsappMessageQueueRepository.getHighPriorityQueuedMessages
       ).toHaveBeenCalledWith(limit);
       expect(result).toEqual(pendingMessages);
+    });
+  });
+
+  /**
+   * Test Suite for getHighPriorityQueuedMessages function
+   * This suite tests fetching pending messages from the queue.
+   */
+  describe('getHighPriorityQueuedMessages', () => {
+    /**
+     * Test Case: Retrieve pending messages within limit
+     * Ensures that pending messages are retrieved up to the specified limit.
+     */
+    it('should retrieve get High Priority Queued Messages within limit', async () => {
+      // Arrange
+      const limit = 10;
+      const pendingMessages = [
+        { id: 1, message: 'Message 1' },
+        { id: 2, message: 'Message 2' },
+      ];
+
+      whatsappMessageQueueRepository.getHighPriorityQueuedMessages.mockResolvedValue(
+        pendingMessages
+      );
+
+      // Act
+      const result = await whatsappQueueService.getHighPriorityQueuedMessages(
+        limit
+      );
+
+      // Assert
+      expect(
+        whatsappMessageQueueRepository.getHighPriorityQueuedMessages
+      ).toHaveBeenCalledWith(limit);
+      expect(result).toEqual(pendingMessages);
+    });
+  });
+
+  /**
+   * Test Suite: getPendingQueuedMessagesWithLimit
+   * Purpose: Verifies that the function retrieves pending messages based on specified priority and limit.
+   * Ensures correct parameter usage, compliance with limit, and proper handling when no messages are found.
+   */
+  describe('getPendingQueuedMessagesWithLimit', () => {
+    afterEach(() => {
+      jest.clearAllMocks(); // Clear any mocks after each test to avoid interference
+    });
+
+    it('should fetch pending messages with the given priority and limit', async () => {
+      // Arrange
+      const mockPriority = 'normal';
+      const mockLimit = 5;
+      const mockMessages = [
+        { id: 1, priority: 'normal', status: 'pending' },
+        { id: 2, priority: 'normal', status: 'pending' },
+        // ...more mock messages up to the limit
+      ];
+
+      // Mock the repository response
+      whatsappMessageQueueRepository.getPendingQueuedMessagesWithLimit.mockResolvedValue(
+        mockMessages
+      );
+
+      // Act
+      const result =
+        await whatsappQueueService.getPendingQueuedMessagesWithLimit(
+          mockPriority,
+          mockLimit
+        );
+
+      // Assert
+      expect(
+        whatsappMessageQueueRepository.getPendingQueuedMessagesWithLimit
+      ).toHaveBeenCalledWith(mockPriority, mockLimit);
+      expect(result).toEqual(mockMessages);
+      expect(result.length).toBeLessThanOrEqual(mockLimit); // Ensures limit is respected
+    });
+
+    it('should return an empty array if no messages are found', async () => {
+      // Arrange
+      const mockPriority = 'normal';
+      const mockLimit = 5;
+      whatsappMessageQueueRepository.getPendingQueuedMessagesWithLimit.mockResolvedValue(
+        []
+      );
+
+      // Act
+      const result =
+        await whatsappQueueService.getPendingQueuedMessagesWithLimit(
+          mockPriority,
+          mockLimit
+        );
+
+      // Assert
+      expect(
+        whatsappMessageQueueRepository.getPendingQueuedMessagesWithLimit
+      ).toHaveBeenCalledWith(mockPriority, mockLimit);
+      expect(result).toEqual([]); // Expecting an empty array if no messages are found
     });
   });
 

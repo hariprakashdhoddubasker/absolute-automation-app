@@ -7,7 +7,7 @@ This app will be used to handle all the automation task for The Absolute Fitness
 https://automation.theabsolutefitness.com/api/enquiries
 http://localhost:3000/api/enquiries
 {
-  "name": "Hari",
+  "name": "Hari2",
   "phone":"8089947074",
   "lead_generated_date": "19-08-2024",
   "branch": "RKR"
@@ -30,6 +30,17 @@ http://localhost:3000/api/whatsapp/create-message-queue
   "audienceType": "EnquiryOnly"
 }
 
+# Pinger API to send WhatsaApp message
+POST
+https://pingerbot.in/api/send
+{
+"number": "8089947074",
+"type": "text",
+"message": "This is a test message",
+"instance_id": "6707B0CF36FFD",
+"access_token": "652fc38345240"
+}
+
 # Send a WhatsApp Message to a single number
 https://automation.theabsolutefitness.com/api/whatsapp/send-message
 http://localhost:3000/api/whatsapp/send-message
@@ -38,14 +49,36 @@ http://localhost:3000/api/whatsapp/send-message
   "message": "Hi,\n\nThis is a Test Message.\n\nPlease ignore this message.",
   "accessToken": "HzW2mCMQvbRwSQy24F38"
 }
+Send with Instance Id
+{
+  "number": "8089947074", 
+  "message": "Hi,\n\nThis is a Test Message.\n\nPlease ignore this message.",
+  "accessToken": "HzW2mCMQvbRwSQy24F38",
+  "instance_id": "6707B0CF36FFD"
+}
+Send a text with media
+{
+  "number": "8089947074", 
+  "message": "Hi *Name* \n🌼 _Ayudha & Saraswati Pooja Wishes!_ 🙏\n\nSpecial offer just for our new inquiries!\n\n🎉 _Vijayadasami Offer_ 🎉  \n\n🔥 *_Buy 6 months, Get 6 months FREE!_* 🔥\n\nDon't miss this LIMITED-TIME opportunity to transform your fitness journey! 💪🏋️‍♂️✨ \nSpots are limited, so call us today to grab your deal! 🏃‍♂️💥\n\n🕒 _Gym Timings_  \n- Shevapet Branch:\n5️⃣:30AM - 9️⃣PM (👩‍🦰 Ladies Only:🔟AM - 4️⃣PM)\n\n- Ramakrishna Branch:\n5️⃣AM - 9️⃣PM (👩‍🦰 Ladies Only:🔟AM - 2️⃣PM)\n\n📞 Call us now! 📲 *09150418332*\n\n🌐 http://www.theabsolutefitness.com\n\nStart your fitness journey today! 🏋️‍♀️✨",
+  "mediaUrl": "https://theabsolutefitness.com/assets/Ayudha_Pooja_Wishes.jpeg",
+  "type":"media"
+  "accessToken": "HzW2mCMQvbRwSQy24F38"
+}
 
 # Send the queued messages with the current daily limit configured in db
 https://automation.theabsolutefitness.com/api/whatsapp/send-queued-messages
+*9
 http://localhost:3000/api/whatsapp/send-queued-messages
 {
   "accessToken": "HzW2mCMQvbRwSQy24F38"
 }
-ToDo: Add some random wait time between the Whatsapp messesges
+
+Sends only the high priority message i.e. he nuturing sequence messages
+http://localhost:3000/api/whatsapp/send-queued-messages
+{
+  "accessToken": "HzW2mCMQvbRwSQy24F38",
+  "priority": "high"
+}
 
 # Meta API Endpoint
 GET & POST

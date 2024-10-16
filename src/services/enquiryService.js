@@ -2,6 +2,7 @@
 const axios = require('axios');
 const csvService = require('../services/csvService');
 const enquiryRepository = require('../repositories/enquiryRepository');
+const enquiryNurtureService = require('./nurtureScheduleService');
 const { handleError } = require('../utils/responseHelpers');
 const moment = require('moment');
 const logger = require('../utils/logger');
@@ -21,8 +22,20 @@ const enquiryService = {
       lead_generated_date: formattedDate,
     };
 
-    // Call the repository layer to create the enquiry
-    enquiryRepository.create(enquiry, callback);
+    // Insert the new enquiry into the database
+    enquiryRepository.create(enquiry, (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+
+      // Use the insertId from the result to create the newEnquiry object
+      const newEnquiry = { ...enquiry, id: result.insertId };
+
+      // Schedule nurture messages after creating the enquiry
+      enquiryNurtureService.scheduleNurtureMessages(newEnquiry);
+
+      callback(null, newEnquiry);
+    });
   },
 
   //Main function for processing the CSV and inserting enquiries

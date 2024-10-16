@@ -15,6 +15,10 @@ const getBulkMessageService = () => {
   return require('../services/bulkMessageService');
 };
 
+const getNurtureScheduleService = () => {
+  return require('../services/nurtureScheduleService');
+};
+
 const { successResponse, errorResponse } = require('../utils/responseHelpers');
 const { validateRequiredFields } = require('../utils/validationHelpers');
 
@@ -40,7 +44,12 @@ const whatsappController = {
       );
       return successResponse(res, result, '', 201);
     } catch (error) {
-      return errorResponse(res, 'Failed to create message queue entries.', 500, error);
+      return errorResponse(
+        res,
+        'Failed to create message queue entries.',
+        500,
+        error
+      );
     }
   },
 
@@ -60,16 +69,16 @@ const whatsappController = {
       accessToken,
       filename,
     } = req.body;
-
+    let { instanceId } = req.body; 
     try {
       if (!validateRequiredFields({ number, message, accessToken }, res))
         return;
 
       const whatsappMessagingService = getWhatsappMessagingService();
-      const instanceId = await whatsappMessagingService.getDefaultInstanceId(
-        res
-      );
-      
+      if (!instanceId) {
+        instanceId = await whatsappMessagingService.getDefaultInstanceId();
+      }
+
       if (!instanceId) return;
 
       const result = await whatsappMessagingService.sendMessage({
@@ -86,15 +95,10 @@ const whatsappController = {
         ? successResponse(res, result)
         : errorResponse(res, 'Failed to send WhatsApp message.', 500, result);
     } catch (error) {
-      return errorResponse(
-        res,
-        'Failed to send WhatsApp message.',
-        500,
-        error
-      );
+      return errorResponse(res, 'Failed to send WhatsApp message.', 500, error);
     }
   },
-  
+
   /**
    * Handles bulk WhatsApp message sending from the queue.
    *
@@ -104,20 +108,22 @@ const whatsappController = {
    */
   sendQueuedWhatsAppMessages: async (req, res) => {
     try {
+      const { priority = 'all' } = req.body;
+
       successResponse(res, {
         status: 'Processing Bulk Messages Started',
         timestamp: new Date().toISOString(),
       });
 
-      const bulkMessageService = getBulkMessageService();
-      bulkMessageService.processBulkMessages(res);
+      if (priority === 'high') {
+        const nurtureScheduleService = getNurtureScheduleService();
+        nurtureScheduleService.sendScheduledNurtureMessages();
+      } else {
+        const bulkMessageService = getBulkMessageService();
+        bulkMessageService.processBulkMessages(priority);
+      }
     } catch (error) {
-      return errorResponse(
-        res,
-        'Failed to send bulk messages.',
-        500,
-        error
-      );
+      return errorResponse(res, 'Failed to send bulk messages.', 500, error);
     }
   },
 };

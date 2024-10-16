@@ -13,9 +13,12 @@ describe('WhatsApp Messaging Service', () => {
   let handleErrorSpy;
   beforeEach(() => {
     jest.clearAllMocks(); // Ensure all mocks are reset before each test
+
     handleErrorSpy = jest
       .spyOn(whatsappMessagingService, 'handleError')
       .mockResolvedValue(); // Mock handleError
+
+    whatsappMessagingService.resetDefaultInstanceId();
   });
 
   /**

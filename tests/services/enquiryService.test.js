@@ -6,12 +6,14 @@ const enquiryService = require('../../src/services/enquiryService');
 const axios = require('axios');
 const csvService = require('../../src/services/csvService');
 const enquiryRepository = require('../../src/repositories/enquiryRepository');
+const enquiryNurtureService = require('../../src/services/nurtureScheduleService');
 const moment = require('moment');
 const logger = require('../../src/utils/logger');
 
 jest.mock('axios');
 jest.mock('../../src/services/csvService');
 jest.mock('../../src/repositories/enquiryRepository');
+jest.mock('../../src/services/nurtureScheduleService');
 jest.mock('../../src/utils/logger');
 jest.mock('moment', () => {
   const originalMoment = jest.requireActual('moment'); // Use jest.requireActual to get the actual moment implementation
@@ -28,11 +30,7 @@ describe('Enquiry Service', () => {
    * Test Suite for createEnquiry function
    */
   describe('createEnquiry', () => {
-    /**
-     * Test Case: Successful creation of an enquiry
-     * Ensures that the enquiry data is formatted correctly and passed to the repository
-     */
-    it('should create an enquiry with formatted date', () => {
+    it('should create an enquiry with formatted date and schedule nurture messages', () => {
       // Arrange
       const enquiryData = {
         name: 'John Doe',
@@ -42,12 +40,18 @@ describe('Enquiry Service', () => {
       };
 
       const formattedDate = '2023-10-10';
-
+      const insertId = 1;
       const callback = jest.fn();
 
       // Mock moment to format date correctly
-      moment.mockReturnValue({
+      const mockMoment = {
         format: jest.fn().mockReturnValue(formattedDate),
+      };
+      moment.mockReturnValue(mockMoment);
+
+      // Mock the repository create method
+      enquiryRepository.create.mockImplementation((enquiry, cb) => {
+        cb(null, { insertId });
       });
 
       // Act
@@ -55,16 +59,76 @@ describe('Enquiry Service', () => {
 
       // Assert
       expect(moment).toHaveBeenCalledWith('10-10-2023', 'DD-MM-YYYY');
+      expect(mockMoment.format).toHaveBeenCalledWith('YYYY-MM-DD');
+
+      const expectedEnquiry = {
+        ...enquiryData,
+        lead_generated_date: formattedDate,
+      };
+
       expect(enquiryRepository.create).toHaveBeenCalledWith(
-        {
-          ...enquiryData,
-          lead_generated_date: formattedDate,
-        },
-        callback
+        expectedEnquiry,
+        expect.any(Function)
       );
+
+      const expectedNewEnquiry = {
+        ...expectedEnquiry,
+        id: insertId,
+      };
+
+      expect(enquiryNurtureService.scheduleNurtureMessages).toHaveBeenCalledWith(
+        expectedNewEnquiry
+      );
+
+      expect(callback).toHaveBeenCalledWith(null, expectedNewEnquiry);
+    });
+
+    it('should handle errors when repository create fails', () => {
+      // Arrange
+      const enquiryData = {
+        name: 'John Doe',
+        phone: '1234567890',
+        lead_generated_date: '10-10-2023',
+        branch: 'Main Branch',
+      };
+
+      const formattedDate = '2023-10-10';
+      const callback = jest.fn();
+      const mockError = new Error('Database error');
+
+      // Mock moment to format date correctly
+      const mockMoment = {
+        format: jest.fn().mockReturnValue(formattedDate),
+      };
+      moment.mockReturnValue(mockMoment);
+
+      // Mock the repository create method to return an error
+      enquiryRepository.create.mockImplementation((enquiry, cb) => {
+        cb(mockError);
+      });
+
+      // Act
+      enquiryService.createEnquiry(enquiryData, callback);
+
+      // Assert
+      expect(moment).toHaveBeenCalledWith('10-10-2023', 'DD-MM-YYYY');
+      expect(mockMoment.format).toHaveBeenCalledWith('YYYY-MM-DD');
+
+      const expectedEnquiry = {
+        ...enquiryData,
+        lead_generated_date: formattedDate,
+      };
+
+      expect(enquiryRepository.create).toHaveBeenCalledWith(
+        expectedEnquiry,
+        expect.any(Function)
+      );
+
+      expect(enquiryNurtureService.scheduleNurtureMessages).not.toHaveBeenCalled();
+
+      expect(callback).toHaveBeenCalledWith(mockError);
     });
   });
-
   /**
    * Test Suite for processCSVAndInsertEnquiries function
    */

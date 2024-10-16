@@ -51,9 +51,17 @@ const whatsappQueueService = {
     await whatsappMessageQueueRepository.insertQueueEntries(entries);
   },
 
+  // Fetch all high priority pending messages
+  getHighPriorityQueuedMessages: async (limit) => {
+    return await whatsappMessageQueueRepository.getHighPriorityQueuedMessages(limit);
+  },
+
   // Fetch pending messages within the limit
-  getPendingMessages: async (limit) => {
-    return await whatsappMessageQueueRepository.getPendingMessages(limit);
+  getPendingQueuedMessagesWithLimit: async (priority, limit) => {
+    return await whatsappMessageQueueRepository.getPendingQueuedMessagesWithLimit(
+      priority,
+      limit
+    );
   },
 
   // Delete a message from the queue after processing
