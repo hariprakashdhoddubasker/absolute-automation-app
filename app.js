@@ -45,14 +45,9 @@ app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/google-drive', googleDriveRoutes);
 app.use('/api/system-health', systemHealthRoutes); 
 
-// app.get('/trigger-error', (req, res, next) => {
-//   // Deliberately throw an error
-//   next(new Error('Deliberate Internal Server Error for Testing'));
-// });
-
 // **Register test routes only during testing**
 if (process.env.NODE_ENV === 'test') {
-  const testRoutes = require('./tests/routes/testRoutes');
+  const testRoutes = require('./tests/unit/routes/testRoutes');
   app.use(testRoutes);
 }
 

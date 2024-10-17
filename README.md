@@ -7,7 +7,7 @@ This app will be used to handle all the automation task for The Absolute Fitness
 https://automation.theabsolutefitness.com/api/enquiries
 http://localhost:3000/api/enquiries
 {
-  "name": "Hari2",
+  "name": "Hari",
   "phone":"8089947074",
   "lead_generated_date": "19-08-2024",
   "branch": "RKR"

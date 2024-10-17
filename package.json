@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "set NODE_ENV=test&& jest --coverage"
+    "test": "set NODE_ENV=test&& jest --config jest.config.js --coverage",
+    "test:integration": "set NODE_ENV=test&& jest --config jest.integration.config.js --coverage"
   },
   "keywords": [],
   "author": "",
