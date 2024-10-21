@@ -59,9 +59,22 @@ const handleError = async (
   message = 'An error occurred',
   error = null,
   sendToWhatsApp = true,
-  shouldThrow = false
+  shouldThrow = false,
+  isRecursive = false,
+  forceNoThrow = false
 ) => {
   const env = process.env.NODE_ENV || 'development';
+
+  // Log the error unless it's a recursive error
+  if (!isRecursive) {
+    logger.error(`Error: ${message}`, {
+      errorMessage: error ? error.message : 'No error message provided',
+      stack: error ? error.stack : 'No stack trace available',
+    });
+  }
+
+  // If recursive, avoid further error handling
+  if (isRecursive) return;
 
   // Log detailed error information
   logger.error(`Error: ${message}`, {
@@ -77,12 +90,23 @@ const handleError = async (
         `Error in Node.js App: ${errorDetails}`
       );
     } catch (error) {
-      await handleError('Failed to send WhatsApp notification', error);
+      await handleError(
+        'Failed to send WhatsApp notification',
+        error,
+        false,
+        false,
+        true
+      );
     }
   }
 
-  // Throw the error in development and test environments for easier debugging
-  if (shouldThrow && (env === 'development' || env === 'test')) {
+  // Throw the error in development environments
+  if (!forceNoThrow && (env === 'development')) {
+    throw error || new Error(message);
+  }
+
+  // In production, throw the error only if shouldThrow is true
+  if (shouldThrow && env === 'production') {
     throw error || new Error(message);
   }
 };

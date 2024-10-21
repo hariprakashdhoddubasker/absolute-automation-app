@@ -1,4 +1,4 @@
-// tests/integration/app.test.js
+// tests/app.test.js
 
 jest.mock('../../src/services/whatsappMessagingService', () => ({
   sendMessageToManagement: jest.fn(),
@@ -47,5 +47,5 @@ describe('App Initialization', () => {
 
     expect(response.status).toBe(400);
     expect(response.text).toBe('Invalid JSON format.');
-  });
+  }, 5000);
 });

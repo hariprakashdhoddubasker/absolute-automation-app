@@ -124,9 +124,7 @@ const whatsappMessagingService = {
 
   // Helper function to reset default instance ID (for testing purposes)
   resetDefaultInstanceId: () => {
-    if (process.env.NODE_ENV === 'Test') {
-      defaultWhatsappInstanceId = null;
-    }
+    defaultWhatsappInstanceId = null;
   },
 
   handleError: async (

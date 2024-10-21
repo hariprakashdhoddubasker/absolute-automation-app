@@ -3,13 +3,19 @@ const axios = require('axios');
 const csvService = require('../services/csvService');
 const enquiryRepository = require('../repositories/enquiryRepository');
 const enquiryNurtureService = require('./nurtureScheduleService');
+const branchService = require('./branchService');
 const { handleError } = require('../utils/responseHelpers');
 const moment = require('moment');
 const logger = require('../utils/logger');
 
 const enquiryService = {
   // Service function to create an enquiry
-  createEnquiry: (enquiryData, callback) => {
+  createEnquiry: async (enquiryData, callback) => {
+    // Get branch ID from branch name
+    const branchId = await branchService.getBranchIdByName(enquiryData.branch);
+    if (!branchId) {
+      return callback(new Error('Invalid branch name'));
+    }
     // Extract necessary fields and format the date
     const { lead_generated_date } = enquiryData;
     const formattedDate = moment(lead_generated_date, 'DD-MM-YYYY').format(
@@ -20,10 +26,11 @@ const enquiryService = {
     const enquiry = {
       ...enquiryData,
       lead_generated_date: formattedDate,
+      branch_id: branchId,
     };
 
     // Insert the new enquiry into the database
-    enquiryRepository.create(enquiry, (err, result) => {
+    enquiryRepository.create(enquiry, async (err, result) => {
       if (err) {
         return callback(err);
       }
@@ -32,7 +39,7 @@ const enquiryService = {
       const newEnquiry = { ...enquiry, id: result.insertId };
 
       // Schedule nurture messages after creating the enquiry
-      enquiryNurtureService.scheduleNurtureMessages(newEnquiry);
+      await enquiryNurtureService.scheduleNurtureMessages(newEnquiry);
 
       callback(null, newEnquiry);
     });

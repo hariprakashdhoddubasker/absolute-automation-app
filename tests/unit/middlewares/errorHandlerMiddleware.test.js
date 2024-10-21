@@ -66,7 +66,12 @@ describe('Error Handling Middleware', () => {
     expect(response.text).toBe('Invalid JSON format.');
 
     expect(handleError).toHaveBeenCalledWith(
-      expect.stringContaining('Bad JSON Error')
+      expect.stringContaining('Bad JSON Error'),
+      expect.any(SyntaxError),
+      true,
+      false,
+      false,
+      true
     );
 
     expect(whatsappMessagingService.sendMessageToManagement).toHaveBeenCalledWith(

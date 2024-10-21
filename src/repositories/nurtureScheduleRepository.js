@@ -37,7 +37,9 @@ const nurtureScheduleRepository = {
     } catch (error) {
       await handleError('Error scheduling nurture message', error);
     } finally {
-      connection.release();
+      if (connection) {
+        connection.release();
+      }
     }
   },
 

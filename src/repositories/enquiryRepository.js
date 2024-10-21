@@ -10,7 +10,7 @@ const EnquiryRepository = {
     try {
       const query = `
         INSERT INTO enquiries 
-        (name, email, phone, dob, gender, address, enquiry_for, followup_date, type, status, source, remarks, lead_generated_date, branch) 
+        (name, email, phone, dob, gender, address, enquiry_for, followup_date, type, status, source, remarks, lead_generated_date, branch_id) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
@@ -29,7 +29,7 @@ const EnquiryRepository = {
         data.source || null,
         data.remarks || null,
         data.lead_generated_date,
-        data.branch,
+        data.branch_id,
       ]);
 
       callback(null, results); // Pass the results to the callback on success
@@ -48,7 +48,7 @@ const EnquiryRepository = {
     try {
       const query = `
         INSERT INTO enquiries 
-        (name, email, phone, dob, gender, address, enquiry_for, followup_date, type, status, source, remarks, lead_generated_date, branch) 
+        (name, email, phone, dob, gender, address, enquiry_for, followup_date, type, status, source, remarks, lead_generated_date, branch_id) 
         VALUES ?
       `;
 
@@ -67,7 +67,7 @@ const EnquiryRepository = {
         data.source || null,
         data.remarks || null,
         data.lead_generated_date,
-        data.branch,
+        data.branch_id,
       ]);
 
       // Execute the bulk insert query

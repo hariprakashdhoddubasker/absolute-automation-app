@@ -52,8 +52,9 @@ describe('nurtureScheduleService', () => {
         name: 'John Doe',
         number: '+1234567890',
         message:
-          'Welcome to The Absolute Fitness! Here is a quick introduction video: {video_link}',
+          'Hey there! 👋 I noticed you signed up with The Absolute Fitness, and I wanted to personally follow up.\n\nWe’re ready to help you transform in just 3 months! 💥✨ All we need is YOU to get started. 💯\n\nReady for more details? Reach out to me anytime – let’s make those fitness goals happen! 💪🔥',
         instanceId: instanceId,
+        media_url: 'https://theabsolutefitness.com/assets/nurture_sequence/1.About.mp4',
       });
       expect(logger.info).toHaveBeenCalledWith(
         'Immediate message sent to +1234567890'
@@ -93,8 +94,9 @@ describe('nurtureScheduleService', () => {
         name: 'John Doe',
         number: '+1234567890',
         message:
-          'Welcome to The Absolute Fitness! Here is a quick introduction video: {video_link}',
+          'Hey there! 👋 I noticed you signed up with The Absolute Fitness, and I wanted to personally follow up.\n\nWe’re ready to help you transform in just 3 months! 💥✨ All we need is YOU to get started. 💯\n\nReady for more details? Reach out to me anytime – let’s make those fitness goals happen! 💪🔥',
         instanceId: instanceId,
+        media_url: 'https://theabsolutefitness.com/assets/nurture_sequence/1.About.mp4',
       });
       expect(logger.error).toHaveBeenCalledWith(
         `Failed to send immediate message to +1234567890: ${error.message}`

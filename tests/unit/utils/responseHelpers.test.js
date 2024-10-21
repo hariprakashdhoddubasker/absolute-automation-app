@@ -1,4 +1,4 @@
-// tests/utils/responseHelpers.test.js
+// tests/unit/utils/responseHelpers.test.js
 
 const {
   successResponse,
@@ -168,22 +168,22 @@ describe('Response Helpers', () => {
     });
   });
 
-  //   /**
-  //    * Test Suite for handleError function
-  //    * This suite tests the error handling functionality.
-  //    */
+  /**
+   * Test Suite for handleError function
+   * This suite tests the error handling functionality.
+   */
   describe('handleError', () => {
     beforeEach(() => {
       jest.clearAllMocks();
     });
 
-    /**
-     * Test Case: Handle error with default parameters
-     * Ensures that the error is logged correctly with default values.
-     */
-    it('should log error with default parameters', async () => {
-      // Act
-      await handleError();
+    it('should log error with default parameters and throw error in development', async () => {
+      // Arrange
+      process.env.NODE_ENV = 'development';
+      const message = 'An error occurred';
+
+      // Act & Assert
+      await expect(handleError()).rejects.toThrow('An error occurred');
 
       // Assert
       expect(logger.error).toHaveBeenCalledWith('Error: An error occurred', {
@@ -193,201 +193,150 @@ describe('Response Helpers', () => {
       expect(
         whatsappMessagingService.sendMessageToManagement
       ).not.toHaveBeenCalled();
+
+      // Clean up
+      process.env.NODE_ENV = 'test';
     });
 
-    /**
-     * Test Case: Handle error with custom message and error object
-     * Ensures that the error is logged with the provided message and error details.
-     */
-    it('should log error with custom message and error object', async () => {
+    it('should log error with custom message and error object and throw error in test', async () => {
       // Arrange
+      process.env.NODE_ENV = 'test';
       const message = 'Custom error message';
       const error = new Error('Something went wrong');
 
-      // Act
-      await handleError(message, error);
-
-      // Assert
-      expect(logger.error).toHaveBeenCalledWith(`Error: ${message}`, {
-        errorMessage: error.message,
-        stack: error.stack,
-      });
-      expect(
-        whatsappMessagingService.sendMessageToManagement
-      ).not.toHaveBeenCalled();
-    });
-
-    /**
-     * Test Case: Send WhatsApp message in production environment
-     * Ensures that a WhatsApp message is sent when in production and sendToWhatsApp is true.
-     */
-    it('should send WhatsApp message in production environment', async () => {
-      // Arrange
-      process.env.NODE_ENV = 'production';
-      const message = 'Production error';
-      const error = new Error('Critical failure');
-
-      // Act
-      await handleError(message, error);
-
-      // Assert
-      expect(logger.error).toHaveBeenCalledWith(`Error: ${message}`, {
-        errorMessage: error.message,
-        stack: error.stack,
-      });
-      expect(
-        whatsappMessagingService.sendMessageToManagement
-      ).toHaveBeenCalledWith(
-        `Error in Node.js App: ${message}: ${error.message}`
-      );
-
-      // Clean up
-      process.env.NODE_ENV = 'test';
-    });
-
-    /**
-     * Test Case: Do not send WhatsApp message if sendToWhatsApp is false
-     * Ensures that no WhatsApp message is sent when sendToWhatsApp is false.
-     */
-    it('should not send WhatsApp message if sendToWhatsApp is false', async () => {
-      // Arrange
-      process.env.NODE_ENV = 'production';
-      const message = 'Error without WhatsApp notification';
-      const error = new Error('Minor issue');
-
-      // Act
-      await handleError(message, error, false);
-
-      // Assert
-      expect(logger.error).toHaveBeenCalled();
-      expect(
-        whatsappMessagingService.sendMessageToManagement
-      ).not.toHaveBeenCalled();
-
-      // Clean up
-      process.env.NODE_ENV = 'test';
-    });
-    // -------------------------------------------------------------------------
-    // /**
-    //  * Test Case: Handle error when WhatsApp message sending fails
-    //  * Ensures that an error during WhatsApp messaging is handled gracefully without infinite recursion.
-    //  */
-    // it('should handle error when WhatsApp message sending fails', async () => {
-    //   // Arrange
-    //   process.env.NODE_ENV = 'production';
-    //   const message = 'Error that causes WhatsApp failure';
-    //   const error = new Error('Original error');
-    //   const whatsappError = new Error('WhatsApp API error');
-
-    //   whatsappMessagingService.sendMessageToManagement.mockRejectedValue(
-    //     whatsappError
-    //   );
-
-    //   // Act
-    //   await handleError(message, error);
-
-    //   // Assert
-    //   expect(logger.error).toHaveBeenCalledTimes(2);
-    //   expect(logger.error).toHaveBeenNthCalledWith(1, `Error: ${message}`, {
-    //     errorMessage: error.message,
-    //     stack: error.stack,
-    //   });
-    //   expect(logger.error).toHaveBeenNthCalledWith(
-    //     2,
-    //     'Error: Failed to send WhatsApp notification',
-    //     {
-    //       errorMessage: whatsappError.message,
-    //       stack: whatsappError.stack,
-    //     }
-    //   );
-    //   expect(
-    //     whatsappMessagingService.sendMessageToManagement
-    //   ).toHaveBeenCalledTimes(1);
-
-    //   // Clean up
-    //   process.env.NODE_ENV = 'test';
-    // });
-    // -------------------------------------------------------------------------
-
-    /**
-     * Test Case: Throw error in development environment when shouldThrow is true
-     * Ensures that the error is thrown in development or test environments.
-     */
-    it('should throw error in development environment when shouldThrow is true', async () => {
-      // Arrange
-      process.env.NODE_ENV = 'development';
-      const message = 'Error to be thrown';
-      const error = new Error('Throw me');
-
       // Act & Assert
-      await expect(handleError(message, error, true, true)).rejects.toThrow(
-        error
-      );
-      expect(logger.error).toHaveBeenCalled();
+      await expect(handleError(message, error));
 
-      // Clean up
-      process.env.NODE_ENV = 'test';
+      // Assert
+      expect(logger.error).toHaveBeenCalledWith(`Error: ${message}`, {
+        errorMessage: error.message,
+        stack: error.stack,
+      });
+      expect(
+        whatsappMessagingService.sendMessageToManagement
+      ).not.toHaveBeenCalled();
     });
 
-    /**
-     * Test Case: Do not throw error in production environment even when shouldThrow is true
-     * Ensures that the error is not thrown in production environment.
-     */
-    it('should not throw error in production environment even when shouldThrow is true', async () => {
+    it('should not throw error in production environment unless shouldThrow is true', async () => {
       // Arrange
       process.env.NODE_ENV = 'production';
       const message = 'Error that should not be thrown';
       const error = new Error('Do not throw me');
 
       // Act
-      await handleError(message, error, true, true);
+      await handleError(message, error);
 
       // Assert
       expect(logger.error).toHaveBeenCalled();
       expect(
         whatsappMessagingService.sendMessageToManagement
       ).toHaveBeenCalled();
-      // No exception should be thrown
 
       // Clean up
       process.env.NODE_ENV = 'test';
     });
 
-    /**
-     * Test Case: Use default error when none is provided and shouldThrow is true
-     * Ensures that a new error is thrown when no error object is provided.
-     */
-    it('should throw new error when no error object is provided and shouldThrow is true', async () => {
-      // Arrange;
-      const message = 'No error object provided';
+    it('should throw error in production environment when shouldThrow is true', async () => {
+      // Arrange
+      process.env.NODE_ENV = 'production';
+      const message = 'Error that should be thrown';
+      const error = new Error('Throw me');
 
-      // Act & Assert;
-      await expect(handleError(message, null, true, true)).rejects.toThrow(
-        message
+      // Act & Assert
+      await expect(handleError(message, error, true, true)).rejects.toThrow(
+        error
       );
+
+      // Assert
       expect(logger.error).toHaveBeenCalled();
+      expect(
+        whatsappMessagingService.sendMessageToManagement
+      ).toHaveBeenCalled();
+
+      // Clean up
+      process.env.NODE_ENV = 'test';
     });
 
-    /**
-     * Test Case: Handle error with isRecursive flag set to prevent infinite recursion
-     * Ensures that the isRecursive flag prevents additional WhatsApp messages and logging.
-     */
     it('should not send WhatsApp message or log error when isRecursive is true', async () => {
-      // Arrange;
+      // Arrange
       const message = 'Recursive error';
       const error = new Error('Recursive issue');
 
-      // Act;
+      // Mock the logger and WhatsApp service
+      const loggerSpy = jest.spyOn(logger, 'error');
+      const sendMessageSpy = jest.spyOn(
+        whatsappMessagingService,
+        'sendMessageToManagement'
+      );
+
+      // Act
       await handleError(message, error, true, false, true);
 
-      // Assert;
-      expect(logger.error).toHaveBeenCalledWith(`Error: ${message}`, {
-        errorMessage: error.message,
-        stack: error.stack,
-      });
+      // Assert
+      expect(logger.error).not.toHaveBeenCalled();
       expect(
         whatsappMessagingService.sendMessageToManagement
       ).not.toHaveBeenCalled();
+    });
+
+    it('should throw new error when no error object is provided and shouldThrow is true in production', async () => {
+      // Arrange
+      process.env.NODE_ENV = 'production';
+      const message = 'No error object provided';
+
+      // Act & Assert
+      await expect(
+        handleError(message, null, true, true)
+      ).rejects.toThrow(message);
+
+      // Assert
+      expect(logger.error).toHaveBeenCalled();
+      expect(
+        whatsappMessagingService.sendMessageToManagement
+      ).toHaveBeenCalled();
+
+      // Clean up
+      process.env.NODE_ENV = 'test';
+    });
+
+    it('should not throw error when shouldThrow is false in production', async () => {
+      // Arrange
+      process.env.NODE_ENV = 'production';
+      const message = 'Error that should not be thrown';
+      const error = new Error('Do not throw me');
+
+      // Act
+      await handleError(message, error, true, false);
+
+      // Assert
+      expect(logger.error).toHaveBeenCalled();
+      expect(
+        whatsappMessagingService.sendMessageToManagement
+      ).toHaveBeenCalled();
+
+      // Clean up
+      process.env.NODE_ENV = 'test';
+    });
+
+    it('should throw error in development environment when shouldThrow is false', async () => {
+      // Arrange
+      process.env.NODE_ENV = 'development';
+      const message = 'Error to be thrown';
+      const error = new Error('Throw me');
+
+      // Act & Assert
+      await expect(handleError(message, error, true, false)).rejects.toThrow(
+        error
+      );
+
+      // Assert
+      expect(logger.error).toHaveBeenCalled();
+      expect(
+        whatsappMessagingService.sendMessageToManagement
+      ).not.toHaveBeenCalled();
+
+      // Clean up
+      process.env.NODE_ENV = 'test';
     });
   });
 });

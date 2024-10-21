@@ -11,27 +11,32 @@ const nurtureSchedule = [
   {
     day: 1,
     message:
-      'Welcome to The Absolute Fitness! Here is a quick introduction video: {video_link}',
+      'Hey there! 👋 I noticed you signed up with The Absolute Fitness, and I wanted to personally follow up.\n\nWe’re ready to help you transform in just 3 months! 💥✨ All we need is YOU to get started. 💯\n\nReady for more details? Reach out to me anytime – let’s make those fitness goals happen! 💪🔥',
+      media_url:'https://theabsolutefitness.com/assets/nurture_sequence/1.About.mp4',
   },
   {
     day: 3,
     message:
-      'Hey {Name}, just checking in! Here are some tips to get started: {tips_link}',
+      '✨ *✨ The Transformation Journey of Dharshini ✨* ✨\n\nDharshini tried everything – just walking, only dieting – but saw no results. 🛑❌\n\nAfter joining *The Absolute Fitness*, things changed. She set a goal: to look fit and feel amazing. 👗💃 With dedication and support from our trainers, she is on her way! 💪🔥\n\nFor her, gym time is *me time* – an investment in health. 🕒💖\n\nIf you are ready to make a change, come join *The Absolute Fitness*! 🚀',
+      media_url:'https://theabsolutefitness.com/assets/nurture_sequence/2.Success_Story.mp4',
   },
   {
     day: 5,
     message:
-      'Reminder to join us for an upcoming fitness event. Details here: {event_link}',
+      'Hey! 💡 Ready for a quick fitness tip to kickstart your gym routine?\n\n👉 Start your day strong with a black coffee (no sugar!) and an apple or banana before your morning workout. 🍎🍌\n\n💧 During the session, keep it simple – lemon and salt will keep you hydrated. 🏋️‍♂️\n\nIf you’re hitting the gym in the evening, fuel up with a banana or apple 30 minutes before. 🍏🕒\n\n💥 Oh, and don’t forget – cardio is great, but muscle training will get you real results!\n\nLet’s get those gains! 💪🔥\n\nNeed more tips? Just reach out! 📲',
+      media_url:'https://theabsolutefitness.com/assets/nurture_sequence/3.WOW_Info.mp4',
   },
   {
     day: 7,
     message:
-      'Stay motivated, {Name}! Here is a motivational video: {motivational_video_link}',
+      'Worried that half your salary will disappear just for 6 months of gym? 😅 No need to stress!\n\nAt The Absolute Fitness, we’ve got your back with an easy EMI option. 💸✨\n\nAnd here’s the best part – if you complete 6 months with us, you get the next 6 months FREE! 🏋️‍♂️🔥\n\nIt’s time to invest in yourself without breaking the bank. 💪 Ready to take the first step? Let’s make this journey affordable and rewarding! 🚀',
+      media_url:'https://theabsolutefitness.com/assets/nurture_sequence/4.Offer.mp4',
   },
   {
     day: 9,
     message:
-      'Need help with your fitness goals? Schedule a free consultation: {consultation_link}',
+      'Why are you still waiting? 🤔\n\nIf you care about your health, it’s time to take action NOW! 💯\n\nWe’re ready to transform you, but the real question is… are YOU ready? 💪\n\nThis is a serious commitment to yourself. Yes or No – it’s that simple. ✔️❌\n\nIf it’s a YES, then let’s make it happen at The Absolute Fitness! 🏋️‍♂️✨\n\nYour transformation starts TODAY. 💥 Don’t wait any longer!',
+      media_url:'https://theabsolutefitness.com/assets/nurture_sequence/5.Yes_or_No.mp4',
   },
 ];
 
@@ -52,6 +57,7 @@ const nurtureScheduleService = {
             number: phone,
             message: immediateMessage.message,
             instanceId: instanceId,
+            media_url: immediateMessage.media_url,
           });
         }
         logger.info(`Immediate message sent to ${phone}`);

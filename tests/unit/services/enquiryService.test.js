@@ -7,6 +7,7 @@ const axios = require('axios');
 const csvService = require('../../../src/services/csvService');
 const enquiryRepository = require('../../../src/repositories/enquiryRepository');
 const enquiryNurtureService = require('../../../src/services/nurtureScheduleService');
+const branchService = require('../../../src/services/branchService');
 const moment = require('moment');
 const logger = require('../../../src/utils/logger');
 
@@ -14,11 +15,8 @@ jest.mock('axios');
 jest.mock('../../../src/services/csvService');
 jest.mock('../../../src/repositories/enquiryRepository');
 jest.mock('../../../src/services/nurtureScheduleService');
+jest.mock('../../../src/services/branchService');
 jest.mock('../../../src/utils/logger');
-jest.mock('moment', () => {
-  const originalMoment = jest.requireActual('moment'); // Use jest.requireActual to get the actual moment implementation
-  return jest.fn((...args) => originalMoment(...args));
-});
 
 describe('Enquiry Service', () => {
   beforeEach(() => {
@@ -30,7 +28,7 @@ describe('Enquiry Service', () => {
    * Test Suite for createEnquiry function
    */
   describe('createEnquiry', () => {
-    it('should create an enquiry with formatted date and schedule nurture messages', () => {
+    it('should create an enquiry with formatted date and schedule nurture messages', async () => {
       // Arrange
       const enquiryData = {
         name: 'John Doe',
@@ -41,13 +39,16 @@ describe('Enquiry Service', () => {
 
       const formattedDate = '2023-10-10';
       const insertId = 1;
+      const branchId = 2;
       const callback = jest.fn();
 
-      // Mock moment to format date correctly
-      const mockMoment = {
-        format: jest.fn().mockReturnValue(formattedDate),
-      };
-      moment.mockReturnValue(mockMoment);
+      // Mock branchService to return a branch ID
+      branchService.getBranchIdByName.mockResolvedValue(branchId);
+
+      // Spy on moment to ensure it is called correctly
+      const momentSpy = jest
+        .spyOn(moment.prototype, 'format')
+        .mockReturnValue(formattedDate);
 
       // Mock the repository create method
       enquiryRepository.create.mockImplementation((enquiry, cb) => {
@@ -55,35 +56,45 @@ describe('Enquiry Service', () => {
       });
 
       // Act
-      enquiryService.createEnquiry(enquiryData, callback);
+      await enquiryService.createEnquiry(enquiryData, callback);
 
       // Assert
-      expect(moment).toHaveBeenCalledWith('10-10-2023', 'DD-MM-YYYY');
-      expect(mockMoment.format).toHaveBeenCalledWith('YYYY-MM-DD');
+      expect(branchService.getBranchIdByName).toHaveBeenCalledWith(
+        'Main Branch'
+      );
 
-      const expectedEnquiry = {
-        ...enquiryData,
-        lead_generated_date: formattedDate,
-      };
+      expect(callback).not.toHaveBeenCalledWith(expect.any(Error));
 
       expect(enquiryRepository.create).toHaveBeenCalledWith(
-        expectedEnquiry,
+        {
+          ...enquiryData,
+          lead_generated_date: formattedDate,
+          branch_id: branchId,
+        },
         expect.any(Function)
       );
 
-      const expectedNewEnquiry = {
-        ...expectedEnquiry,
+      expect(
+        enquiryNurtureService.scheduleNurtureMessages
+      ).toHaveBeenCalledWith({
+        ...enquiryData,
+        lead_generated_date: formattedDate,
+        branch_id: branchId,
         id: insertId,
-      };
+      });
 
-      expect(enquiryNurtureService.scheduleNurtureMessages).toHaveBeenCalledWith(
-        expectedNewEnquiry
-      );
+      expect(callback).toHaveBeenCalledWith(null, {
+        ...enquiryData,
+        lead_generated_date: formattedDate,
+        branch_id: branchId,
+        id: insertId,
+      });
 
-      expect(callback).toHaveBeenCalledWith(null, expectedNewEnquiry);
+      // Clean up
+      momentSpy.mockRestore();
     });
 
-    it('should handle errors when repository create fails', () => {
+    it('should handle errors when repository create fails', async () => {
       // Arrange
       const enquiryData = {
         name: 'John Doe',
@@ -93,14 +104,17 @@ describe('Enquiry Service', () => {
       };
 
       const formattedDate = '2023-10-10';
+      const branchId = 2;
       const callback = jest.fn();
       const mockError = new Error('Database error');
 
-      // Mock moment to format date correctly
-      const mockMoment = {
-        format: jest.fn().mockReturnValue(formattedDate),
-      };
-      moment.mockReturnValue(mockMoment);
+      // Mock branchService to return a branch ID
+      branchService.getBranchIdByName.mockResolvedValue(branchId);
+
+      // Spy on moment to ensure it is called correctly
+      const momentSpy = jest
+        .spyOn(moment.prototype, 'format')
+        .mockReturnValue(formattedDate);
 
       // Mock the repository create method to return an error
       enquiryRepository.create.mockImplementation((enquiry, cb) => {
@@ -108,25 +122,30 @@ describe('Enquiry Service', () => {
       });
 
       // Act
-      enquiryService.createEnquiry(enquiryData, callback);
+      await enquiryService.createEnquiry(enquiryData, callback);
 
       // Assert
-      expect(moment).toHaveBeenCalledWith('10-10-2023', 'DD-MM-YYYY');
-      expect(mockMoment.format).toHaveBeenCalledWith('YYYY-MM-DD');
-
-      const expectedEnquiry = {
-        ...enquiryData,
-        lead_generated_date: formattedDate,
-      };
+      expect(branchService.getBranchIdByName).toHaveBeenCalledWith(
+        'Main Branch'
+      );
 
       expect(enquiryRepository.create).toHaveBeenCalledWith(
-        expectedEnquiry,
+        {
+          ...enquiryData,
+          lead_generated_date: formattedDate,
+          branch_id: branchId,
+        },
         expect.any(Function)
       );
 
-      expect(enquiryNurtureService.scheduleNurtureMessages).not.toHaveBeenCalled();
+      expect(
+        enquiryNurtureService.scheduleNurtureMessages
+      ).not.toHaveBeenCalled();
 
       expect(callback).toHaveBeenCalledWith(mockError);
+
+      // Clean up
+      momentSpy.mockRestore();
     });
   });
   /**
@@ -168,12 +187,8 @@ describe('Enquiry Service', () => {
       ]);
 
       // Mock moment for date validation and formatting
-      moment.mockImplementation((dateStr, format, strict) => {
-        return {
-          isValid: () => true,
-          format: () => '2023-10-10',
-        };
-      });
+      jest.spyOn(moment.prototype, 'isValid').mockReturnValue(true);
+      jest.spyOn(moment.prototype, 'format').mockReturnValue('2023-10-10');
 
       // Mock enquiryRepository.bulkCreate
       enquiryRepository.bulkCreate.mockImplementation((data, callback) => {

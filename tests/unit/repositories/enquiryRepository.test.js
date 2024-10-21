@@ -1,10 +1,11 @@
 // tests/repositories/enquiryRepository.test.js
 
+jest.mock('../../../src/config/db');
+jest.mock('../../../src/utils/responseHelpers');
+
 const EnquiryRepository = require('../../../src/repositories/enquiryRepository');
 const db = require('../../../src/config/db');
-
-// Mock the getConnection method from the db module
-jest.mock('../../../src/config/db');
+const { handleError } = require('../../../src/utils/responseHelpers');
 
 describe('EnquiryRepository', () => {
   let mockConnection;
@@ -40,7 +41,7 @@ describe('EnquiryRepository', () => {
         source: 'Website',
         remarks: 'Interested in annual plan',
         lead_generated_date: '2023-09-01',
-        branch: 'Main Branch',
+        branch_id: '2',
       };
 
       // Mock query to resolve with results
@@ -68,7 +69,7 @@ describe('EnquiryRepository', () => {
         data.source,
         data.remarks,
         data.lead_generated_date,
-        data.branch,
+        data.branch_id,
       ]);
       expect(callback).toHaveBeenCalledWith(null, mockResults);
       expect(mockConnection.release).toHaveBeenCalled();
@@ -80,7 +81,7 @@ describe('EnquiryRepository', () => {
         name: 'John Doe',
         phone: '1234567890',
         lead_generated_date: '2023-09-01',
-        branch: 'Main Branch',
+        branch_id: '2',
       };
 
       // Mock query to reject with an error
@@ -95,6 +96,10 @@ describe('EnquiryRepository', () => {
       // Assert
       expect(db.getConnection).toHaveBeenCalled();
       expect(mockConnection.query).toHaveBeenCalled();
+      expect(handleError).toHaveBeenCalledWith(
+        '[create] Error inserting data into enquiries:',
+        mockError
+      );
       expect(callback).toHaveBeenCalledWith(mockError, null);
       expect(mockConnection.release).toHaveBeenCalled();
     });
@@ -118,7 +123,7 @@ describe('EnquiryRepository', () => {
           source: 'Website',
           remarks: 'Interested in annual plan',
           lead_generated_date: '2023-09-01',
-          branch: 'Main Branch',
+          branch_id: '2',
         },
         {
           name: 'Jane Smith',
@@ -134,7 +139,7 @@ describe('EnquiryRepository', () => {
           source: 'Facebook',
           remarks: 'Interested in monthly plan',
           lead_generated_date: '2023-09-02',
-          branch: 'Downtown Branch',
+          branch_id: '1',
         },
       ];
 
@@ -164,10 +169,12 @@ describe('EnquiryRepository', () => {
         data.source,
         data.remarks,
         data.lead_generated_date,
-        data.branch,
+        data.branch_id,
       ]);
 
-      expect(mockConnection.query).toHaveBeenCalledWith(expect.any(String), [expectedValues]);
+      expect(mockConnection.query).toHaveBeenCalledWith(expect.any(String), [
+        expectedValues,
+      ]);
       expect(callback).toHaveBeenCalledWith(null, mockResults);
       expect(mockConnection.release).toHaveBeenCalled();
     });
@@ -179,7 +186,7 @@ describe('EnquiryRepository', () => {
           name: 'John Doe',
           phone: '1234567890',
           lead_generated_date: '2023-09-01',
-          branch: 'Main Branch',
+          branch_id: '1',
         },
       ];
 
@@ -261,7 +268,9 @@ describe('EnquiryRepository', () => {
       mockConnection.query.mockRejectedValue(mockError);
 
       // Act & Assert
-      await expect(EnquiryRepository.getAllEnquiryPhoneNumbers()).rejects.toThrow(mockError);
+      await expect(
+        EnquiryRepository.getAllEnquiryPhoneNumbers()
+      ).rejects.toThrow(mockError);
       expect(db.getConnection).toHaveBeenCalled();
       expect(mockConnection.query).toHaveBeenCalled();
       expect(mockConnection.release).toHaveBeenCalled();
@@ -293,7 +302,9 @@ describe('EnquiryRepository', () => {
       mockConnection.query.mockRejectedValue(mockError);
 
       // Act & Assert
-      await expect(EnquiryRepository.getEnquiryNameAndContacts()).rejects.toThrow(mockError);
+      await expect(
+        EnquiryRepository.getEnquiryNameAndContacts()
+      ).rejects.toThrow(mockError);
       expect(db.getConnection).toHaveBeenCalled();
       expect(mockConnection.query).toHaveBeenCalled();
       expect(mockConnection.release).toHaveBeenCalled();
