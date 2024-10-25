@@ -139,7 +139,7 @@ const EnquiryRepository = {
     const connection = await getConnection(); // Get a connection from the pool
 
     try {
-      const query = 'SELECT name, phone FROM enquiries';
+      const query = 'SELECT name, phone, branch_id FROM enquiries';
       // Execute the query to fetch name and phone from the enquiries table
       const [results] = await connection.query(query);
 

@@ -34,6 +34,7 @@ const whatsappQueueService = {
       media_url: mediaUrl,
       filename: null, // Set this if applicable
       status: 'pending',
+      branch_id: contact.branch_id
     }));
 
     // Insert the entries into the queue

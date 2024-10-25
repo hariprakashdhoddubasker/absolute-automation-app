@@ -23,11 +23,12 @@ const whatsappMessageQueueRepository = {
         entry.filename,
         entry.status,
         priority,
+        entry.branch_id
       ]);
 
       // Execute the bulk insert query
       await connection.query(
-        'INSERT INTO whatsapp_message_queue (name, phone, message, media_url, filename, status, priority) VALUES ?',
+        'INSERT INTO whatsapp_message_queue (name, phone, message, media_url, filename, status, priority, branch_id) VALUES ?',
         [values]
       );
 

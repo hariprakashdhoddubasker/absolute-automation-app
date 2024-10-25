@@ -14,7 +14,7 @@ const enquiryService = {
     // Get branch ID from branch name
     const branchId = await branchService.getBranchIdByName(enquiryData.branch);
     if (!branchId) {
-      return callback(new Error('Invalid branch name'));
+      return callback(new Error('Invalid branch id'));
     }
     // Extract necessary fields and format the date
     const { lead_generated_date } = enquiryData;

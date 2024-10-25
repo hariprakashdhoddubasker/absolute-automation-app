@@ -46,6 +46,7 @@ describe('whatsappMessageQueueRepository', () => {
           media_url: null,
           filename: null,
           status: 'pending',
+          branch_id: '1',
         },
         {
           name: 'Jane Smith',
@@ -54,6 +55,7 @@ describe('whatsappMessageQueueRepository', () => {
           media_url: 'http://example.com/image.jpg',
           filename: 'image.jpg',
           status: 'pending',
+          branch_id: '1',
         },
       ];
 
@@ -65,7 +67,7 @@ describe('whatsappMessageQueueRepository', () => {
       // Assert
       expect(db.getConnection).toHaveBeenCalled();
       expect(mockConnection.query).toHaveBeenCalledWith(
-        'INSERT INTO whatsapp_message_queue (name, phone, message, media_url, filename, status, priority) VALUES ?',
+        'INSERT INTO whatsapp_message_queue (name, phone, message, media_url, filename, status, priority, branch_id) VALUES ?',
         [
           [
             [
@@ -76,6 +78,7 @@ describe('whatsappMessageQueueRepository', () => {
               entries[0].filename,
               entries[0].status,
               'normal', // Default priority
+              entries[0].branch_id,
             ],
             [
               entries[1].name,
@@ -85,11 +88,14 @@ describe('whatsappMessageQueueRepository', () => {
               entries[1].filename,
               entries[1].status,
               'normal', // Default priority
+              entries[0].branch_id,
             ],
           ],
         ]
       );
-      expect(logger.info).toHaveBeenCalledWith('Queue entries inserted successfully.');
+      expect(logger.info).toHaveBeenCalledWith(
+        'Queue entries inserted successfully.'
+      );
       expect(mockConnection.release).toHaveBeenCalled();
     });
 
@@ -103,6 +109,7 @@ describe('whatsappMessageQueueRepository', () => {
           media_url: null,
           filename: null,
           status: 'pending',
+          branch_id: '1',
         },
       ];
 
@@ -134,12 +141,14 @@ describe('whatsappMessageQueueRepository', () => {
           message: 'High priority message',
           status: 'pending',
           priority: 'high',
+          branch_id: '1',
         },
       ];
       mockConnection.query.mockResolvedValue([mockRows]);
 
       // Act
-      const result = await whatsappMessageQueueRepository.getHighPriorityQueuedMessages();
+      const result =
+        await whatsappMessageQueueRepository.getHighPriorityQueuedMessages();
 
       // Assert
       expect(db.getConnection).toHaveBeenCalled();
@@ -154,7 +163,8 @@ describe('whatsappMessageQueueRepository', () => {
       mockConnection.query.mockRejectedValue(mockError);
 
       // Act
-      const result = await whatsappMessageQueueRepository.getHighPriorityQueuedMessages();
+      const result =
+        await whatsappMessageQueueRepository.getHighPriorityQueuedMessages();
 
       // Assert
       expect(db.getConnection).toHaveBeenCalled();
@@ -180,19 +190,24 @@ describe('whatsappMessageQueueRepository', () => {
           message: 'Normal priority message',
           status: 'pending',
           priority: 'normal',
+          branch_id: '1',
         },
       ];
       mockConnection.query.mockResolvedValue([mockRows]);
 
       // Act
-      const result = await whatsappMessageQueueRepository.getPendingQueuedMessagesWithLimit(
-        priority,
-        limit
-      );
+      const result =
+        await whatsappMessageQueueRepository.getPendingQueuedMessagesWithLimit(
+          priority,
+          limit
+        );
 
       // Assert
       expect(db.getConnection).toHaveBeenCalled();
-      expect(mockConnection.query).toHaveBeenCalledWith(expect.any(String), [priority, limit]);
+      expect(mockConnection.query).toHaveBeenCalledWith(expect.any(String), [
+        priority,
+        limit,
+      ]);
       expect(result).toEqual(mockRows);
       expect(mockConnection.release).toHaveBeenCalled();
     });
@@ -205,10 +220,11 @@ describe('whatsappMessageQueueRepository', () => {
       mockConnection.query.mockRejectedValue(mockError);
 
       // Act
-      const result = await whatsappMessageQueueRepository.getPendingQueuedMessagesWithLimit(
-        priority,
-        limit
-      );
+      const result =
+        await whatsappMessageQueueRepository.getPendingQueuedMessagesWithLimit(
+          priority,
+          limit
+        );
 
       // Assert
       expect(db.getConnection).toHaveBeenCalled();
@@ -236,7 +252,9 @@ describe('whatsappMessageQueueRepository', () => {
         'DELETE FROM whatsapp_message_queue WHERE id = ?',
         [id]
       );
-      expect(logger.info).toHaveBeenCalledWith(`Message with ID ${id} deleted from queue.`);
+      expect(logger.info).toHaveBeenCalledWith(
+        `Message with ID ${id} deleted from queue.`
+      );
       expect(mockConnection.release).toHaveBeenCalled();
     });
 

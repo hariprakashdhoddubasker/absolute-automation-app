@@ -17,8 +17,7 @@ jest.mock('../../../src/utils/logger');
 describe('nurtureScheduleService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.NODE_ENV = 'production'; // Set environment to production for tests
-  });
+      });
 
   afterAll(() => {
     jest.restoreAllMocks();
@@ -27,21 +26,27 @@ describe('nurtureScheduleService', () => {
   describe('scheduleNurtureMessages', () => {
     it('should send immediate Day 1 message and schedule remaining messages', async () => {
       // Arrange
+      process.env.NODE_ENV = 'production';
       const enquiryData = {
         id: 1,
         name: 'John Doe',
         phone: '+1234567890',
         lead_generated_date: '2023-09-01',
+        branch_id: '1',
       };
 
       const instanceId = 'instance_1';
-      whatsappMessagingService.getDefaultInstanceId.mockResolvedValue(instanceId);
+      whatsappMessagingService.getDefaultInstanceId.mockResolvedValue(
+        instanceId
+      );
       whatsappMessagingService.sendMessage.mockResolvedValue();
       nurtureScheduleRepository.scheduleNurtureMessage.mockResolvedValue();
 
       // Mock moment for this test case
       const mockMoment = jest.spyOn(moment.prototype, 'add').mockReturnThis();
-      const mockFormat = jest.spyOn(moment.prototype, 'format').mockReturnValue('2023-09-03');
+      const mockFormat = jest
+        .spyOn(moment.prototype, 'format')
+        .mockReturnValue('2023-09-03');
 
       // Act
       await nurtureScheduleService.scheduleNurtureMessages(enquiryData);
@@ -52,14 +57,18 @@ describe('nurtureScheduleService', () => {
         name: 'John Doe',
         number: '+1234567890',
         message:
-          'Hey there! 👋 I noticed you signed up with The Absolute Fitness, and I wanted to personally follow up.\n\nWe’re ready to help you transform in just 3 months! 💥✨ All we need is YOU to get started. 💯\n\nReady for more details? Reach out to me anytime – let’s make those fitness goals happen! 💪🔥',
+          'Hey *{Name}* 👋 \n\nI noticed you signed up with *The Absolute Fitness*, and I wanted to personally follow up.\n\nWe’re ready to help you *transform in just 3 months!* 💥✨ \n\nAll we need is *YOU to get started*. 💯\n\nReady for more details? \n\nReach out to me anytime 💪\n\n🔥Lets make those fitness goals happen!',
         instanceId: instanceId,
-        media_url: 'https://theabsolutefitness.com/assets/nurture_sequence/1.About.mp4',
+        mediaUrl:
+          'https://theabsolutefitness.com/assets/nurture_sequence/1.About.mp4',
+          type: 'media',
       });
       expect(logger.info).toHaveBeenCalledWith(
         'Immediate message sent to +1234567890'
       );
-      expect(nurtureScheduleRepository.scheduleNurtureMessage).toHaveBeenCalledTimes(4); // Remaining 4 messages
+      expect(
+        nurtureScheduleRepository.scheduleNurtureMessage
+      ).toHaveBeenCalledTimes(4); // Remaining 4 messages
 
       // Clean up mocks
       mockMoment.mockRestore();
@@ -68,22 +77,28 @@ describe('nurtureScheduleService', () => {
 
     it('should handle errors when sending immediate message fails', async () => {
       // Arrange
+      process.env.NODE_ENV = 'production';
       const enquiryData = {
         id: 1,
         name: 'John Doe',
         phone: '+1234567890',
         lead_generated_date: '2023-09-01',
+        branch_id: '1',
       };
 
       const instanceId = 'instance_1';
       const error = new Error('Failed to send message');
-      whatsappMessagingService.getDefaultInstanceId.mockResolvedValue(instanceId);
+      whatsappMessagingService.getDefaultInstanceId.mockResolvedValue(
+        instanceId
+      );
       whatsappMessagingService.sendMessage.mockRejectedValue(error);
       nurtureScheduleRepository.scheduleNurtureMessage.mockResolvedValue();
 
       // Mock moment
       const mockMoment = jest.spyOn(moment.prototype, 'add').mockReturnThis();
-      const mockFormat = jest.spyOn(moment.prototype, 'format').mockReturnValue('2023-09-03');
+      const mockFormat = jest
+        .spyOn(moment.prototype, 'format')
+        .mockReturnValue('2023-09-03');
 
       // Act
       await nurtureScheduleService.scheduleNurtureMessages(enquiryData);
@@ -94,14 +109,18 @@ describe('nurtureScheduleService', () => {
         name: 'John Doe',
         number: '+1234567890',
         message:
-          'Hey there! 👋 I noticed you signed up with The Absolute Fitness, and I wanted to personally follow up.\n\nWe’re ready to help you transform in just 3 months! 💥✨ All we need is YOU to get started. 💯\n\nReady for more details? Reach out to me anytime – let’s make those fitness goals happen! 💪🔥',
+          'Hey *{Name}* 👋 \n\nI noticed you signed up with *The Absolute Fitness*, and I wanted to personally follow up.\n\nWe’re ready to help you *transform in just 3 months!* 💥✨ \n\nAll we need is *YOU to get started*. 💯\n\nReady for more details? \n\nReach out to me anytime 💪\n\n🔥Lets make those fitness goals happen!',
         instanceId: instanceId,
-        media_url: 'https://theabsolutefitness.com/assets/nurture_sequence/1.About.mp4',
+        mediaUrl:
+          'https://theabsolutefitness.com/assets/nurture_sequence/1.About.mp4',
+        type: 'media',
       });
       expect(logger.error).toHaveBeenCalledWith(
         `Failed to send immediate message to +1234567890: ${error.message}`
       );
-      expect(nurtureScheduleRepository.scheduleNurtureMessage).toHaveBeenCalledTimes(4); // Remaining 4 messages
+      expect(
+        nurtureScheduleRepository.scheduleNurtureMessage
+      ).toHaveBeenCalledTimes(4); // Remaining 4 messages
 
       // Clean up mocks
       mockMoment.mockRestore();
@@ -115,14 +134,19 @@ describe('nurtureScheduleService', () => {
         name: 'John Doe',
         phone: '+1234567890',
         lead_generated_date: '2023-09-01',
+           branch_id: '1'
       };
 
-      whatsappMessagingService.getDefaultInstanceId.mockResolvedValue('instance_1');
+      whatsappMessagingService.getDefaultInstanceId.mockResolvedValue(
+        'instance_1'
+      );
       whatsappMessagingService.sendMessage.mockResolvedValue();
 
       // Mock moment
       const mockMoment = jest.spyOn(moment.prototype, 'add').mockReturnThis();
-      const mockFormat = jest.spyOn(moment.prototype, 'format').mockReturnValue('2023-09-03');
+      const mockFormat = jest
+        .spyOn(moment.prototype, 'format')
+        .mockReturnValue('2023-09-03');
 
       // Act
       await nurtureScheduleService.scheduleNurtureMessages(enquiryData);
@@ -138,7 +162,9 @@ describe('nurtureScheduleService', () => {
           scheduledDate: expect.any(String),
         })
       );
-      expect(nurtureScheduleRepository.scheduleNurtureMessage).not.toHaveBeenCalled();
+      expect(
+        nurtureScheduleRepository.scheduleNurtureMessage
+      ).not.toHaveBeenCalled();
 
       // Clean up mocks
       mockMoment.mockRestore();
@@ -148,19 +174,25 @@ describe('nurtureScheduleService', () => {
     it('should not send immediate message if NODE_ENV is not production', async () => {
       // Arrange
       process.env.NODE_ENV = 'development';
+      delete process.env.CAN_SEND_WA_MESSAGE; // Ensure it's not set
       const enquiryData = {
         id: 1,
         name: 'John Doe',
         phone: '+1234567890',
         lead_generated_date: '2023-09-01',
+        branch_id: '1',
       };
 
-      whatsappMessagingService.getDefaultInstanceId.mockResolvedValue('instance_1');
+      whatsappMessagingService.getDefaultInstanceId.mockResolvedValue(
+        'instance_1'
+      );
       whatsappMessagingService.sendMessage.mockResolvedValue();
 
       // Mock moment
       const mockMoment = jest.spyOn(moment.prototype, 'add').mockReturnThis();
-      const mockFormat = jest.spyOn(moment.prototype, 'format').mockReturnValue('2023-09-03');
+      const mockFormat = jest
+        .spyOn(moment.prototype, 'format')
+        .mockReturnValue('2023-09-03');
 
       // Act
       await nurtureScheduleService.scheduleNurtureMessages(enquiryData);
@@ -170,7 +202,9 @@ describe('nurtureScheduleService', () => {
       expect(logger.info).toHaveBeenCalledWith(
         'Immediate message sent to +1234567890'
       );
-      expect(nurtureScheduleRepository.scheduleNurtureMessage).toHaveBeenCalledTimes(4);
+      expect(
+        nurtureScheduleRepository.scheduleNurtureMessage
+      ).toHaveBeenCalledTimes(4);
 
       // Clean up mocks
       mockMoment.mockRestore();
@@ -190,6 +224,7 @@ describe('nurtureScheduleService', () => {
           name: 'John Doe',
           number: '+1234567890',
           message: 'Test message',
+          branch_id: '1',
         },
       ];
       nurtureScheduleRepository.getScheduledMessagesForDate.mockResolvedValue(
@@ -203,11 +238,12 @@ describe('nurtureScheduleService', () => {
       await nurtureScheduleService.sendScheduledNurtureMessages();
 
       // Assert
-      expect(nurtureScheduleRepository.getScheduledMessagesForDate).toHaveBeenCalledWith(
-        today,
-        'high'
-      );
-      expect(whatsappMessageQueueRepository.insertQueueEntries).toHaveBeenCalledWith([
+      expect(
+        nurtureScheduleRepository.getScheduledMessagesForDate
+      ).toHaveBeenCalledWith(today, 'high');
+      expect(
+        whatsappMessageQueueRepository.insertQueueEntries
+      ).toHaveBeenCalledWith([
         {
           name: 'John Doe',
           phone: '+1234567890',
@@ -216,10 +252,15 @@ describe('nurtureScheduleService', () => {
           filename: null,
           status: 'pending',
           priority: 'high',
+             branch_id: '1'
         },
       ]);
-      expect(bulkMessageService.processBulkMessages).toHaveBeenCalledWith('high');
-      expect(nurtureScheduleRepository.markMessageAsSent).toHaveBeenCalledWith(1);
+      expect(bulkMessageService.processBulkMessages).toHaveBeenCalledWith(
+        'high'
+      );
+      expect(nurtureScheduleRepository.markMessageAsSent).toHaveBeenCalledWith(
+        1
+      );
       expect(logger.info).toHaveBeenCalledWith(
         'Scheduled nurture messages have been added to the queue.'
       );
@@ -233,13 +274,17 @@ describe('nurtureScheduleService', () => {
       const today = '2023-09-03';
       jest.spyOn(moment.prototype, 'format').mockReturnValue(today);
 
-      nurtureScheduleRepository.getScheduledMessagesForDate.mockResolvedValue([]);
+      nurtureScheduleRepository.getScheduledMessagesForDate.mockResolvedValue(
+        []
+      );
 
       // Act
       await nurtureScheduleService.sendScheduledNurtureMessages();
 
       // Assert
-      expect(logger.info).toHaveBeenCalledWith('No nurture messages to send today.');
+      expect(logger.info).toHaveBeenCalledWith(
+        'No nurture messages to send today.'
+      );
 
       // Clean up mocks
       moment.prototype.format.mockRestore();
@@ -256,13 +301,16 @@ describe('nurtureScheduleService', () => {
           name: 'John Doe',
           number: '+1234567890',
           message: 'Test message',
+             branch_id: '1'
         },
       ];
       const error = new Error('Processing failed');
       nurtureScheduleRepository.getScheduledMessagesForDate.mockResolvedValue(
         scheduledMessages
       );
-      whatsappMessageQueueRepository.insertQueueEntries.mockRejectedValue(error);
+      whatsappMessageQueueRepository.insertQueueEntries.mockRejectedValue(
+        error
+      );
 
       // Act
       await nurtureScheduleService.sendScheduledNurtureMessages();

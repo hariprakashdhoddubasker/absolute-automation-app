@@ -12,10 +12,11 @@ const nurtureScheduleRepository = {
     message,
     scheduledDate,
     priority,
+    branch_id,
   }) => {
     const connection = await getConnection();
     try {
-      const query = `INSERT INTO nurture_schedule (enquiry_id, name, number, message, scheduled_date, priority) VALUES (?, ?, ?, ?, ?, ?)`;
+      const query = `INSERT INTO nurture_schedule (enquiry_id, name, number, message, scheduled_date, priority, branch_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
       const params = [
         enquiryId ?? null,
         name ?? 'No Name',
@@ -23,6 +24,7 @@ const nurtureScheduleRepository = {
         message ?? 'No Message',
         scheduledDate ?? new Date().toISOString().split('T')[0],
         priority ?? 'low',
+        branch_id ?? '1',
       ];
 
       if (params.includes(undefined)) {

@@ -49,8 +49,8 @@ describe('WhatsApp Queue Service', () => {
       const audienceType = 'EnquiryOnly';
 
       const enquiries = [
-        { name: 'Enquiry One', phone: '1234567890' },
-        { name: 'Enquiry Two', phone: '0987654321' },
+        { name: 'Enquiry One', phone: '1234567890', branch_id: '1' },
+        { name: 'Enquiry Two', phone: '0987654321', branch_id: '1' },
       ];
 
       enquiryRepository.getEnquiryNameAndContacts.mockResolvedValue(enquiries);
@@ -77,6 +77,7 @@ describe('WhatsApp Queue Service', () => {
           media_url: mediaUrl,
           filename: null,
           status: 'pending',
+          branch_id: '1',
         },
         {
           name: 'Enquiry Two',
@@ -85,6 +86,7 @@ describe('WhatsApp Queue Service', () => {
           media_url: mediaUrl,
           filename: null,
           status: 'pending',
+          branch_id: '1',
         },
       ]);
       expect(result).toBe('Message queue entries created successfully.');
@@ -101,8 +103,8 @@ describe('WhatsApp Queue Service', () => {
       const audienceType = 'ClientsOnly';
 
       const clients = [
-        { name: 'Client One', phone: '1122334455' },
-        { name: 'Client Two', phone: '5566778899' },
+        { name: 'Client One', phone: '1122334455', branch_id: '1' },
+        { name: 'Client Two', phone: '5566778899', branch_id: '1' },
       ];
 
       clientService.getClientContacts.mockResolvedValue(clients);
@@ -129,6 +131,7 @@ describe('WhatsApp Queue Service', () => {
           media_url: mediaUrl,
           filename: null,
           status: 'pending',
+          branch_id: '1',
         },
         {
           name: 'Client Two',
@@ -137,6 +140,7 @@ describe('WhatsApp Queue Service', () => {
           media_url: mediaUrl,
           filename: null,
           status: 'pending',
+          branch_id: '1',
         },
       ]);
       expect(result).toBe('Message queue entries created successfully.');
@@ -152,8 +156,12 @@ describe('WhatsApp Queue Service', () => {
       const mediaUrl = null;
       const audienceType = 'Both';
 
-      const enquiries = [{ name: 'Enquiry One', phone: '1234567890' }];
-      const clients = [{ name: 'Client One', phone: '1122334455' }];
+      const enquiries = [
+        { name: 'Enquiry One', phone: '1234567890', branch_id: '1' },
+      ];
+      const clients = [
+        { name: 'Client One', phone: '1122334455', branch_id: '1' },
+      ];
 
       enquiryRepository.getEnquiryNameAndContacts.mockResolvedValue(enquiries);
       clientService.getClientContacts.mockResolvedValue(clients);
@@ -181,6 +189,7 @@ describe('WhatsApp Queue Service', () => {
           media_url: mediaUrl,
           filename: null,
           status: 'pending',
+          branch_id: '1',
         },
         {
           name: 'Client One',
@@ -189,6 +198,7 @@ describe('WhatsApp Queue Service', () => {
           media_url: mediaUrl,
           filename: null,
           status: 'pending',
+          branch_id: '1',
         },
       ]);
       expect(result).toBe('Message queue entries created successfully.');
@@ -247,6 +257,7 @@ describe('WhatsApp Queue Service', () => {
           media_url: null,
           filename: null,
           status: 'pending',
+          branch_id: '1',
         },
       ];
 

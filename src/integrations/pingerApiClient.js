@@ -55,13 +55,18 @@ const pingerApiClient = {
         }`;
         logger.info(result);
       } else {
-        result = 'Failed to send message: ' + response.data.message;
+        if (response.data.message) {
+          result = 'Failed to send message: ' + response.data.message;
+        }
+        else{
+          result = 'Failed to send message: ' + response.data;
+        }
         await handleError(result);
       }
 
       return result;
     } catch (error) {
-      await handleError(`Failed to send ${type} message`,error);
+      await handleError(`Failed to send ${type} message`, error);
     }
   },
   sendMessageToGroup: async ({
@@ -74,7 +79,7 @@ const pingerApiClient = {
     try {
       // Determine the payload based on the message type
       const payload = {
-        group_id : groupId,
+        group_id: groupId,
         type,
         message,
         instance_id: instanceId,
@@ -111,13 +116,18 @@ const pingerApiClient = {
       }
 
       return result;
-    } catch (error) {      
-      await handleError(`Failed to send ${type} message`,error);
+    } catch (error) {
+      await handleError(`Failed to send ${type} message`, error);
     }
   },
 };
 
-const handleError = async (message = 'An error occurred', error = null, sendToWhatsApp = true, shouldThrow = false) => {
+const handleError = async (
+  message = 'An error occurred',
+  error = null,
+  sendToWhatsApp = true,
+  shouldThrow = false
+) => {
   const env = process.env.NODE_ENV || 'development';
 
   // Log detailed error information

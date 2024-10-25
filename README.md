@@ -34,7 +34,7 @@ http://localhost:3000/api/whatsapp/create-message-queue
 POST
 https://pingerbot.in/api/send
 {
-"number": "8089947074",
+"number": "918089947074",
 "type": "text",
 "message": "This is a test message",
 "instance_id": "6707B0CF36FFD",
@@ -200,3 +200,10 @@ http://localhost:3000/api/system-health/send-report
   package.json
   package-lock.json
   README.md
+
+# How to Run Test Case
+npx jest tests/unit/middlewares/errorHandlerMiddleware.test.js --detectOpenHandles
+
+npx jest tests/unit/app.test.js -t "should handle invalid JSON with a 400 status"
+
+npm run test:e2e

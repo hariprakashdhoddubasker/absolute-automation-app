@@ -59,7 +59,9 @@ describe('POST /api/enquiries', () => {
         .replace(/\//g, '-'); // "DD-MM-YYYY" format
 
       expect(dbLeadGeneratedDate).toBe(enquiryData.lead_generated_date);
-      expect(dbEntry.branch).toBe(enquiryData.branch);
+      expect(dbEntry.branch_id).not.toBeNull();
+      expect(dbEntry.branch_id).not.toBeUndefined();
+      expect(dbEntry.branch_id).not.toBe("");
 
       // Validate created_at timestamp is close to the current time
       const createdAt = new Date(dbEntry.created_at);
