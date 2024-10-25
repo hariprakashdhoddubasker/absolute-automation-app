@@ -4,9 +4,10 @@ const { handleError } = require('../utils/responseHelpers');
 
 const BranchRepository = {
   getBranchIdByName: async (branchName) => {
-    const connection = await getConnection();
+    let connection;
 
     try {
+      connection = await getConnection();
       const query = 'SELECT branch_id FROM branches WHERE branch_name = ?';
       const [results] = await connection.query(query, [branchName]);
 

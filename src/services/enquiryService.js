@@ -83,7 +83,7 @@ const processEnquiryData = async (rawData) => {
       await enquiryRepository.getAllEnquiryPhoneNumbers();
     const uniqueEnquiries = new Map();
 
-    rawData.forEach((row) => {
+    for (const row of rawData) {
       const name = row.name ? sanitizeString(row.name) : '';
       const phone = row.phone ? row.phone.replace(/\D/g, '').slice(-10) : '';
 
@@ -101,7 +101,7 @@ const processEnquiryData = async (rawData) => {
             : moment().format('YYYY-MM-DD');
 
           const branch = row.branch ? row.branch.trim() : 'SPT';
-
+          const branchId = await branchService.getBranchIdByName(branch);
           uniqueEnquiries.set(phone, {
             name,
             phone,
@@ -116,11 +116,11 @@ const processEnquiryData = async (rawData) => {
             status: row.status || null,
             source: row.source || null,
             remarks: row.remarks || null,
-            branch,
+            branch_id: branchId,
           });
         }
       }
-    });
+    }
 
     // Convert the Map to an array for bulk insertion
     return Array.from(uniqueEnquiries.values());

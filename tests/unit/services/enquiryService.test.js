@@ -163,6 +163,10 @@ describe('Enquiry Service', () => {
       // Mock axios to return a stream (simplified as an object here)
       const csvStream = {};
       axios.get.mockResolvedValue({ status: 200, data: csvStream });
+      const branchId = 1;
+
+      // Mock branchService to return a branch ID
+      branchService.getBranchIdByName.mockResolvedValue(branchId);
 
       // Mock csvService to return parsed data
       const rawData = [
@@ -220,7 +224,7 @@ describe('Enquiry Service', () => {
             status: null,
             source: null,
             remarks: null,
-            branch: 'Second Branch',
+            branch_id: 1,
           },
         ],
         expect.any(Function)
