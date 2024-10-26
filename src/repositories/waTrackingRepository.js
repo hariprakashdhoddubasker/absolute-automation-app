@@ -23,7 +23,8 @@ const waTrackingRepository = {
       const query = `
         SELECT phone_number, instance_id, 
                IF(last_reset_date < ?, 0, message_count) AS message_count, 
-               daily_limit
+               daily_limit,
+               branch_id
         FROM whatsapp_tracking
         WHERE (last_reset_date < ? OR (last_reset_date = ? AND message_count < daily_limit))
       `;

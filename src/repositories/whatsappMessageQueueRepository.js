@@ -6,7 +6,7 @@ const { handleError } = require('../utils/responseHelpers');
 
 const whatsappMessageQueueRepository = {
   // Function to insert entries into the whatsapp_message_queue table
-  insertQueueEntries: async (entries, priority = 'normal') => {
+  insertQueueEntries: async (entries,  defaultPriority = 'normal') => {
     if (!entries.length) {
       logger.info('No entries to insert.');
       return;
@@ -22,7 +22,7 @@ const whatsappMessageQueueRepository = {
         entry.media_url,
         entry.filename,
         entry.status,
-        priority,
+        entry.priority || defaultPriority,
         entry.branch_id
       ]);
 
